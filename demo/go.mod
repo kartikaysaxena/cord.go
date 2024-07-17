@@ -1,13 +1,16 @@
-module github.com/dhiway/demo
+module github.com/kartikaysaxena/cord.go/demo
 
 go 1.22.3
 
-require github.com/dhiway/cord.go v0.1.0
+require github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
+
+require (
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
+	github.com/mr-tron/base58 v1.2.0 // indirect
+)
 
 require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
-	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible // indirect
-	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/base58 v1.0.4 // indirect
@@ -17,6 +20,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
+	github.com/kartikaysaxena/cord.go v1.5.0
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/rs/cors v1.8.2 // indirect
@@ -26,4 +30,4 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
 
-replace github.com/dhiway/cord.go => ../
+replace github.com/kartikaysaxena/cord.go => ../
