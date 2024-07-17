@@ -2,64 +2,118 @@ package config
 
 import (
 	"errors"
-	"fmt"
-	"sync"
+	// "reflect"
+
+	// "fmt"
+	// "strings"
+
+	gsrpc "github.com/centrifuge/go-substrate-rpc-client"
+	// "github.com/ethereum/go-ethereum/accounts/keystore"
+	// "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	subscriptionPromise "github.com/kartikaysaxena/cord.go/packages/types/subscriptionPromise"
 )
 
-type SDKErrors struct{}
+// BlockchainApiMissingError represents an error for missing blockchain API configuration.
+// var defaultConfig = map[string]ConfigOpts{}
+
+var ConfigService ConfigOpts
+
+func GetConfigField(config ConfigOpts, key string) (any, bool) {
+	if key == "API" || key == "api" {
+		if config.API == nil {
+			return "API is empty", false
+		}
+		return config.API, true
+	} else if key == "SubmitTxResolveOn" {
+		if config.SubmitTxResolveOn == nil {
+			return "SubmitTxResolveOn is empty", false
+		}
+		return config.SubmitTxResolveOn, true
+	}
+	return nil, false
+}
 
 type BlockchainApiMissingError struct{}
 
-// sdk error types to be shifted to packages/utils
+type ConfigOpts struct {
+	API *gsrpc.SubstrateAPI
+
+	// Storage
+	SubmitTxResolveOn *subscriptionPromise.ResultEvaluator
+	// ResolveOn subscriptionPromise.
+	Key string
+}
+
+// var newapi,_ = gsrpc.NewSubstrateAPI("df.ds")
+
+// var new = &ConfigOpts{
+// 	API: newapi,
+// 	Key: "",
+// }
+
+var configuration struct {
+	ConfigOpts ConfigOpts
+}
+
+// var configuration struct {
+//     ConfigOpts ConfigOpts
+// }
+
+// type RpcAPI map[string]ConfigOpts
 
 func (e *BlockchainApiMissingError) Error() string {
-    return "Blockchain API is missing"
+	return "Blockchain API is missing. Please set the 'api' configuration."
 }
 
-type ConfigService struct {
-    config map[string]interface{}
-    mu     *sync.RWMutex
+// ConfigService struct managing configuration settings.
+
+// func NewConfigOptions() *ConfigOpts {
+// 	return &ConfigOpts {
+// 		API: gsrpc.SubstrateAPI,
+// 	}
+// }
+// var ConfigServiceInstance = NewConfigService()
+
+// func NewConfigService() *ConfigService {
+//     return &ConfigService{
+//         config: ,
+//     }
+// }
+// Singleton instance of ConfigService
+// var once sync.Once
+
+// Get retrieves the value of a specified configuration option.
+func Get(key string) (ConfigOpts, error) {
+	// ConfigServiceInstance.mu.RLock()
+	// defer ConfigServiceInstance.mu.RUnlock()
+	_, value := GetConfigField(ConfigService, key)
+	if value == false {
+		if key == "api" {
+			errors.New("api missing")
+		} else {
+			errors.New("not configured")
+		}
+	}
+	configuration.ConfigOpts = ConfigService
+	return configuration.ConfigOpts, nil
 }
 
-func NewConfigService() *ConfigService {
-    return &ConfigService{
-        config: make(map[string]interface{}),
-    }
+// Set sets one or more configuration options.
+func Set(configs ConfigOpts) {
+	configuration.ConfigOpts = configs
+	ConfigService = configs
 }
 
-func (cs *ConfigService) Get(key string) (interface{}, error) {
-    cs.mu.RLock()
-    defer cs.mu.RUnlock()
-
-    value, exists := cs.config[key]
-    if !exists {
-        if key == "api" {
-            return nil, &BlockchainApiMissingError{}
-        }
-        return nil, errors.New("GENERIC NOT CONFIGURED ERROR FOR KEY: \"" + key + "\"")
-    }
-    return value, nil
+// Unset resets a configuration option to its default value.
+func Unset(key string) {
+	_, val := GetConfigField(ConfigService, key)
+	if val != false {
+		ConfigService.Key = ""
+	}
 }
 
-func (cs *ConfigService) Set(configs map[string]interface{}) {
-	fmt.Println(configs)
-	cs.config = make(map[string]interface{})
-    for key, value := range configs {
-		fmt.Println(value)
-        cs.config[key] = value
-    }
-}
-
-func (cs *ConfigService) Unset(key string) {
-    cs.mu.Lock()
-    defer cs.mu.Unlock()
-    delete(cs.config, key)
-}
-
-func (cs *ConfigService) IsSet(key string) bool {
-    cs.mu.RLock()
-    defer cs.mu.RUnlock()
-
-    _, exists := cs.config[key]
-    return exists
+// IsSet checks whether a specific configuration option is set.
+func IsSet(key string) bool { // revisit
+	_, val := GetConfigField(ConfigService, key)
+	return !val
 }

@@ -1,13 +1,11 @@
-module github.com/dhiway/demo
+module github.com/kartikaysaxena/demo
 
 go 1.22.3
 
-require github.com/dhiway/cord.go v0.1.0
+require github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
 
 require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
-	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible // indirect
-	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/base58 v1.0.4 // indirect
@@ -26,4 +24,4 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
 
-replace github.com/dhiway/cord.go => ../
+replace github.com/kartikaysaxena/cord.go => ../

@@ -2,20 +2,25 @@ package config
 
 import (
 	"fmt"
-	// t "github.com/centrifuge/go-substrate-rpc-client/types" 
-	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
+	// t "github.com/centrifuge/go-substrate-rpc-client/types"
+	gsrpc "github.com/centrifuge/go-substrate-rpc-client"
+	// "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	// subscriptionPromise "github.com/kartikaysaxena/cord.go/packages/types/subscriptionPromise"
 )
 
-var cs = NewConfigService()
+// type RpcApI struct {
+// 	SubstrateAPI gsrpc.SubstrateAPI
+// 	Configs      map[string]subscriptionPromise.Evaluator[extrinsic.ISubmittableResult]
+// }
 
-func Init(configs map[string]interface{},cs *ConfigService) {
+func Init(configs ConfigOpts) {
 
-	cs.Set(configs)
+	Set(configs)
 	// Config service would now be initiated by passing the config options
 }
 
-func Connect(networkAddress string, apiOptions ...interface{}) (*gsrpc.SubstrateAPI, error) {
-	
+func Connect(networkAddress string, configs ConfigOpts) (*gsrpc.SubstrateAPI, error) {
+
 	substrate, err := gsrpc.NewSubstrateAPI(networkAddress)
 	fmt.Println(substrate)
 	fmt.Println(&substrate)
@@ -32,20 +37,18 @@ func Connect(networkAddress string, apiOptions ...interface{}) (*gsrpc.Substrate
 	}
 	fmt.Printf("Connected to chain using %v v%v\n", nodeName, nodeVersion)
 
-	Init(map[string]interface{}{"api": *substrate},cs)
+	// rpcAPI := &ConfigOpts{
+	// 	Configs:      configs,
+	// 	SubstrateAPI: *substrate,
+	// }
+	configs.API = substrate
+	configs.Key = "api"
+	Init(configs)
 	fmt.Println("hey from here")
+
 	return substrate, nil
 }
 
 func Disconnect() bool {
-	if !cs.IsSet("api") {
-		return false
-	}
-	cs.Unset("api")
-	// api, err := cs.Get("api") 
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// api.Disconnect()
-	return true
+	return IsSet("api")
 }

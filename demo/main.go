@@ -2,11 +2,22 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/dhiway/cord.go/packages/config"
+	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
 )
 
-func main() {
-	fmt.Println("Starting up the program")
-	config.Connect("ws://127.0.0.1:9944")
+const (
+	networkAddress = "ws://127.0.0.1:9944"
+)
+
+func Cord() {
+	api, err := gsrpc.NewSubstrateAPI(networkAddress)
+	fmt.Println(api)
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func Hello0() {
+	fmt.Println("Hello0")
 }
