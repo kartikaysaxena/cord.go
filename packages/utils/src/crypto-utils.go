@@ -10,7 +10,6 @@ import (
 
 	"strconv"
 
-	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
@@ -237,20 +236,4 @@ func NewCall(m *types.Metadata, call string, args ...interface{}) (types.Call, e
 	return types.Call{
 		CallIndex: c, 
 		Args: a}, nil
-}
-
-func SubmitExtrinsic(ext types.Extrinsic, api *gsrpc.SubstrateAPI) (types.Hash, error) {
-	enc, err := codec.EncodeToHex(ext)
-
-	if err != nil {
-		return types.Hash{}, err
-	}
-	var res string
-	err = api.Client.Call(&res, "author_submitExtrinsic", enc) // here is the main
-	fmt.Println("res is ",res)
-	fmt.Println("error is here")
-	if err != nil {
-		return types.Hash{}, err
-	}
-	return types.NewHashFromHexString(res)
 }

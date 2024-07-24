@@ -103,21 +103,4 @@ func main() {
 
 
 	fmt.Println("main in sign",ext.Signature.Signature.AsSr25519)
-
-	sub, err := api.RPC.Author.SubmitAndWatchExtrinsic(ext)
-	if err != nil {
-		panic(err)
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		status := <-sub.Chan()
-		fmt.Printf("Transaction status: %#v\n", status)
-
-		if status.IsInBlock {
-			fmt.Printf("Completed at block hash: %#x\n", status.AsInBlock)
-			return
-		}
-	}
-
 }
