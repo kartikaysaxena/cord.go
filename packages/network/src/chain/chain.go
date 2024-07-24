@@ -7,7 +7,6 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	extrinsic "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
 
-	// "github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	ConfigService "github.com/kartikaysaxena/cord.go/packages/config"
 )
 
@@ -28,10 +27,3 @@ func SubmitSignedTx(Extrinsic types.Extrinsic, opts ConfigService.ConfigOpts) (*
 func Is_In_Block(result extrinsic.ISubmittableResult) (bool) {
 	return result.IsInBlock
 }
-
-// func SignAndSubmitTx(Extrinsic types.Extrinsic, opts ConfigService.ConfigOpts)  {
-// 	signature.KeyringPairFromSecret()
-// 	// signatureOptions := &types.SignatureOptions{
-// 	// 	Era:,
-// 	// }
-// }

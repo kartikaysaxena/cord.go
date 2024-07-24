@@ -5,17 +5,6 @@ import (
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
 )
 
-// func Init(config map[string]*subscriptionPromise.ResultEvaluator) {
-
-// 	Set(config)
-// }
-
-// func InitAPI(config map[string]*ConfigOpts) {
-// 	SetAPI(config)
-// }
-
-// func SetAPI(config map[string]*ConfigOpts)
-
 func Connect(networkAddress string, configs ConfigOpts) (*gsrpc.SubstrateAPI, error) {
 
 	substrate, err := gsrpc.NewSubstrateAPI(networkAddress)

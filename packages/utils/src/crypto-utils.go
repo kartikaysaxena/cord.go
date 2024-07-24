@@ -54,7 +54,6 @@ func U8aToHex(value []byte, bitLength int, isPrefixed bool) string {
 	if len(value) == 0 {
 		return prefix
 	}
-	// Handle bit length, if provided
 	if bitLength > 0 {
 		length := (bitLength + 7) / 8 // Equivalent to Math.ceil(bitLength / 8)
 		if len(value) > length {
@@ -75,17 +74,16 @@ func Blake2AsU8a(data []byte, bitLength int, key []byte) ([]byte, error) {
 
 	inputData := data
 
-	// Select the BLAKE2b function based on the bit length
 	var hashFunc func([]byte) ([]byte, error)
 	switch bitLength {
 	case 64:
 		hashFunc = func(data []byte) ([]byte, error) {
-			hash := blake2b.Sum512(data) // blake2b doesn't support 64 directly, using 512 for illustration
+			hash := blake2b.Sum512(data)
 			return hash[:8], nil
 		}
 	case 128:
 		hashFunc = func(data []byte) ([]byte, error) {
-			hash := blake2b.Sum512(data) // blake2b doesn't support 128 directly, using 512 for illustration
+			hash := blake2b.Sum512(data)
 			return hash[:16], nil
 		}
 	case 256:
@@ -147,7 +145,7 @@ func GenerateMnemonic() string{
 	return mnemonic
 }
 
-func SignatureVerify(message []byte, sig []byte, publicKey []byte) bool { // REVISTTTTT
+func SignatureVerify(message []byte, sig []byte, publicKey []byte) bool {
 	flag, _ := signature.Verify(message, sig, string(publicKey))
 	return flag
 }
@@ -256,30 +254,3 @@ func SubmitExtrinsic(ext types.Extrinsic, api *gsrpc.SubstrateAPI) (types.Hash, 
 	}
 	return types.NewHashFromHexString(res)
 }
-
-// func GenerateMnemonic() {
-// 	entropy, err := bip39.NewEntropy(256)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// // Generate mnemonic
-// 	mnemonic, err := bip39.NewMnemonic(entropy)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	// Display the mnemonic
-// 	fmt.Println("Mnemonic:", mnemonic)
-
-// 	// Generate seed from mnemonic
-// 	seed := bip39.NewSeed(mnemonic, "")
-
-// 	// Derive key pair from seed
-// 	keyringPair, err := subkey.DeriveKeyPair(subkey.Sr25519Type, seed)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// }
-

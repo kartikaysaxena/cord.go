@@ -2,19 +2,9 @@ package config
 
 import (
 	"errors"
-	// "reflect"
-
-	// "fmt"
-	// "strings"
-
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
-	// "github.com/ethereum/go-ethereum/accounts/keystore"
-	// "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
 	subscriptionPromise "github.com/kartikaysaxena/cord.go/packages/types/subscriptionPromise"
 )
-
-// BlockchainApiMissingError represents an error for missing blockchain API configuration.
-// var defaultConfig = map[string]ConfigOpts{}
 
 var ConfigService ConfigOpts
 
@@ -70,8 +60,6 @@ func Set(config map[string]*subscriptionPromise.ResultEvaluator) {
 			ConfigService.SubmitTxResolveOn = value
 		}
 	}
-	// configuration.ConfigOpts = configs
-	// ConfigService = configs
 }
 
 func Unset(key string) {

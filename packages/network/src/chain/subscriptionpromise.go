@@ -8,7 +8,6 @@ import (
 type Errors struct{}
 
 func (e *Errors) TimeoutError() error {
-	// rpc.
 	return errors.New("Timeout error")
 }
 

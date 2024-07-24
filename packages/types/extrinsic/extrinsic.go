@@ -20,10 +20,6 @@ type EventDetails struct {
 	Event Event
 }
 
-// func main() {
-// 	types
-// }
-
 type ISubmittableResult struct {
 	IsInBlock      bool
 	Status         ExtrinsicStatus
@@ -75,7 +71,3 @@ func NewCallWithSudoParams(callModule string,callFunction string, call types.Cal
 		},
 	}
 }
-
-// func NewCall(m *types.Metadata, call string, args []byte) (types.Call, error) {
-	
-// }
