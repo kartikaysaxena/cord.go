@@ -21,6 +21,7 @@ require (
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/kartikaysaxena/cord.go v1.5.0
+	github.com/kartikaysaxena/substrateinterface v0.5.0
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/rs/cors v1.8.2 // indirect
