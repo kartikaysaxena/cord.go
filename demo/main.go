@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 
-	types "github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	config "github.com/kartikaysaxena/cord.go/packages/config"
-	extrinsic "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	// extrinsic "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
 	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	types "github.com/kartikaysaxena/substrateinterface/types"
+	ext "github.com/kartikaysaxena/substrateinterface/types/extrinsic"
+	"github.com/kartikaysaxena/substrateinterface/types/extrinsic/extensions"
+
 )
 
 func main() {
@@ -57,50 +60,72 @@ func main() {
 	}
 	fmt.Println("version")
 	fmt.Println(meta.Version)
-	Pallets := meta.AsMetadataV14.Pallets
-	for _, mod := range Pallets {
-		fmt.Println("Module Name", mod.Name)
-	}
 	fmt.Println(meta.ExistsModuleMetadata("NetworkMembership"))
 	fmt.Println(meta.Version)
-
 
 	keyringPair, err := utils.CreateAccount()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("keyringpair",keyringPair.URI)
+	fmt.Println("keyringpair", keyringPair.URI)
 
-	apiCall, err := utils.NewCall(meta,"NetworkMembership.nominate","NetworkMembership","nominate",keyringPair.Address,false)
+	call, err := types.NewCall(meta, "NetworkMembership.nominate")
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	sudoapiCall, err := utils.NewCall(meta,"Sudo.sudo","Sudo","sudo",apiCall)
-
+	sudoCall, err := types.NewCall(meta, "Sudo.sudo", call)
 
 	if err != nil {
 		panic(err)
-	}	
+	}
+	accountStorageKey, err := types.CreateStorageKey(meta, "System", "Account", keyringPair.PublicKey)
+	var accountInfo types.AccountInfo
+	ok, err := api.RPC.State.GetStorageLatest(accountStorageKey, &accountInfo)
 
-	ext := extrinsic.NewExtrinsic(sudoapiCall)
-
-	o := types.SignatureOptions{
-		BlockHash:          genesisHash,
-		Era:                types.ExtrinsicEra{IsMortalEra: false},
-		GenesisHash:        genesisHash,
-		SpecVersion:        rv.SpecVersion,
-		Tip:                types.NewUCompactFromUInt(100),
-		TransactionVersion: rv.TransactionVersion,
+	if err != nil || !ok {
+		panic(err)
 	}
 
-	err = ext.Sign(keyringPair, o)
+	extr := ext.NewDynamicExtrinsic(&sudoCall)
+
+	err = extr.Sign(
+		keyringPair,
+		meta,
+		ext.WithEra(types.ExtrinsicEra{IsImmortalEra: true}, genesisHash),
+		ext.WithNonce(types.NewUCompactFromUInt(uint64(accountInfo.Nonce))),
+		ext.WithTip(types.NewUCompactFromUInt(0)),
+		ext.WithSpecVersion(rv.SpecVersion),
+		ext.WithTransactionVersion(rv.TransactionVersion),
+		ext.WithGenesisHash(genesisHash),
+		ext.WithMetadataMode(extensions.CheckMetadataModeDisabled, extensions.CheckMetadataHash{Hash: types.NewEmptyOption[types.H256]()}),
+		ext.WithAssetID(types.NewEmptyOption[types.AssetID]()),
+	)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Extrinsic Signature",ext.Signature.Signature.AsSr25519)
+	fmt.Println("Extrinsic Signature", extr.Signature.Signature.AsSr25519)
 
+	fmt.Println("main in sign", extr.Signature.Signature.AsSr25519)
 
-	fmt.Println("main in sign",ext.Signature.Signature.AsSr25519)
+	sub, err := api.RPC.Author.SubmitAndWatchDynamicExtrinsic(extr)
+	fmt.Println(sub)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer sub.Unsubscribe()
+
+	for {
+		select {
+		case st := <-sub.Chan():
+			extStatus, _ := st.MarshalJSON()
+			fmt.Printf("Status for transaction - %s\n", string(extStatus))
+		case err := <-sub.Err():
+			panic(err)
+		}
+	}
+
 }
