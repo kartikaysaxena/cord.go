@@ -2,7 +2,8 @@ package config
 
 import (
 	"fmt"
-	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
+
+	gsrpc "github.com/kartikaysaxena/substrateinterface"
 )
 
 func Connect(networkAddress string, configs ConfigOpts) (*gsrpc.SubstrateAPI, error) {

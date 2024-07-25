@@ -3,9 +3,9 @@ package network
 import (
 	"errors"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/rpc/author"
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	extrinsic "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	"github.com/kartikaysaxena/substrateinterface/rpc/author"
+	"github.com/kartikaysaxena/substrateinterface/types"
 
 	ConfigService "github.com/kartikaysaxena/cord.go/packages/config"
 )
@@ -24,6 +24,6 @@ func SubmitSignedTx(Extrinsic types.Extrinsic, opts ConfigService.ConfigOpts) (*
 	return statusSubs, err
 }
 
-func Is_In_Block(result extrinsic.ISubmittableResult) (bool) {
+func Is_In_Block(result extrinsic.ISubmittableResult) bool {
 	return result.IsInBlock
 }

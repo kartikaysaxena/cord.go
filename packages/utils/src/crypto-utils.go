@@ -10,9 +10,10 @@ import (
 
 	"strconv"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
+	"github.com/kartikaysaxena/substrateinterface/signature"
+	"github.com/kartikaysaxena/substrateinterface/types"
+
+	// "github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/cosmos/go-bip39"
 	"github.com/mr-tron/base58/base58"
 	"golang.org/x/crypto/blake2b"
@@ -24,7 +25,7 @@ type SignatureOpts struct {
 
 func CheckAddress(address string, expectedPrefix byte) bool {
 	decoded, err := base58.Decode(address)
-	if err!= nil {
+	if err != nil {
 		return false
 	}
 	if len(decoded) == 0 {
@@ -138,7 +139,7 @@ func RandomAsU8a(length int) []byte {
 	return b
 }
 
-func GenerateMnemonic() string{
+func GenerateMnemonic() string {
 	entropy, _ := bip39.NewEntropy(256)
 	mnemonic, _ := bip39.NewMnemonic(entropy)
 	return mnemonic
@@ -149,7 +150,7 @@ func SignatureVerify(message []byte, sig []byte, publicKey []byte) bool {
 	return flag
 }
 
-func EncodeAddress(publicKey []byte, ss58Format int) (CordAddress,error) {
+func EncodeAddress(publicKey []byte, ss58Format int) (CordAddress, error) {
 	return CordAddress(Base58Encode(publicKey)), errors.New("Cannot encode address")
 }
 
@@ -220,20 +221,20 @@ func CreateAccount() (signature.KeyringPair,error) {
 	return signature.KeyringPairFromSecret(mnemonic,Ss58Format)
 }
 
-func NewCall(m *types.Metadata, call string, args ...interface{}) (types.Call, error) {
-	c, err := m.FindCallIndex(call)
-	var a []byte
-	for _, arg := range args {
-		e, err := codec.Encode(arg)
-		if err != nil {
-			return types.Call{}, err
-		}
-		a = append(a, e...)
-	}
-	if err != nil {
-		return types.Call{}, err
-	}
-	return types.Call{
-		CallIndex: c, 
-		Args: a}, nil
-}
+// func NewCall(m *types.Metadata, call string, args ...interface{}) (types.Call, error) {
+// 	c, err := m.FindCallIndex(call)
+// 	var a []byte
+// 	for _, arg := range args {
+// 		e, err := codec.Encode(arg)
+// 		if err != nil {
+// 			return types.Call{}, err
+// 		}
+// 		a = append(a, e...)
+// 	}
+// 	if err != nil {
+// 		return types.Call{}, err
+// 	}
+// 	return types.Call{
+// 		CallIndex: c,
+// 		Args:      a}, nil
+// }

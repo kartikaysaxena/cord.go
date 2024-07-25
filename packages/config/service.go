@@ -2,8 +2,9 @@ package config
 
 import (
 	"errors"
-	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
+
 	subscriptionPromise "github.com/kartikaysaxena/cord.go/packages/types/subscriptionPromise"
+	gsrpc "github.com/kartikaysaxena/substrateinterface"
 )
 
 var ConfigService ConfigOpts

@@ -1,7 +1,7 @@
 package extrinsic
 
 import (
-	types "github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	types "github.com/kartikaysaxena/substrateinterface/types"
 )
 
 func NewExtrinsic(c types.Call) types.Extrinsic {
@@ -37,34 +37,34 @@ type ExtrinsicStatus struct {
 }
 
 type CallParams struct {
-	Authority string `json:"authority"`
-	Expires bool `json:"expires"`
-	Call types.Call `json:"call"`
+	Authority string     `json:"authority"`
+	Expires   bool       `json:"expires"`
+	Call      types.Call `json:"call"`
 }
 
 type CallParamsv2 struct {
-	CallModule string `json:"call_module"`
-	CallFunction string `json:"call_function"`
-	CallParams CallParams `json:"call_params"`
+	CallModule   string     `json:"call_module"`
+	CallFunction string     `json:"call_function"`
+	CallParams   CallParams `json:"call_params"`
 }
 
-func NewCallParams(callModule string,callFunction string ,authority string, expires bool) *CallParamsv2 {
+func NewCallParams(callModule string, callFunction string, authority string, expires bool) *CallParamsv2 {
 
 	callParams := CallParams{
 		Authority: authority,
-		Expires: expires,
+		Expires:   expires,
 	}
 
 	return &CallParamsv2{
-		CallModule: callModule,
+		CallModule:   callModule,
 		CallFunction: callFunction,
-		CallParams: callParams,
+		CallParams:   callParams,
 	}
 }
 
-func NewCallWithSudoParams(callModule string,callFunction string, call types.Call) *CallParamsv2{
+func NewCallWithSudoParams(callModule string, callFunction string, call types.Call) *CallParamsv2 {
 	return &CallParamsv2{
-		CallModule: callModule,
+		CallModule:   callModule,
 		CallFunction: callFunction,
 		CallParams: CallParams{
 			Call: call,
