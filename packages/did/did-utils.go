@@ -14,8 +14,8 @@ import (
 const DID_LATEST_VERSION = 1
 
 var (
-	ss58Format        = 42
-	CORD_DID_REGEX    = regexp.MustCompile(`^did:cord:(?P<address>3[1-9a-km-zA-HJ-NP-Z]{47})(?P<fragment>#[^#\n]+)?$`)
+	ss58Format            = 42
+	CORD_DID_REGEX        = regexp.MustCompile(`^did:cord:(?P<address>3[1-9a-km-zA-HJ-NP-Z]{47})(?P<fragment>#[^#\n]+)?$`)
 	InvalidDidFormatError = fmt.Errorf("Invalid DID format")
 	DidError              = fmt.Errorf("DID Error")
 )

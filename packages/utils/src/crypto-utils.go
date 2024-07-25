@@ -215,10 +215,10 @@ func CreateFromMnemonic(mnemonic string) (signature.KeyringPair, error) {
 	return signature.KeyringPairFromSecret(mnemonic, 29)
 }
 
-func CreateAccount() (signature.KeyringPair,error) {
+func CreateAccount() (signature.KeyringPair, error) {
 	entropy, _ := bip39.NewEntropy(256)
 	mnemonic, _ := bip39.NewMnemonic(entropy)
-	return signature.KeyringPairFromSecret(mnemonic,Ss58Format)
+	return signature.KeyringPairFromSecret(mnemonic, Ss58Format)
 }
 
 // func NewCall(m *types.Metadata, call string, args ...interface{}) (types.Call, error) {

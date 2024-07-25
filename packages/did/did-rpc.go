@@ -8,7 +8,7 @@ import (
 )
 
 func FromChain(encoded []byte) string {
-	address, err := utils.EncodeAddress(encoded,utils.Ss58Format) 
+	address, err := utils.EncodeAddress(encoded, utils.Ss58Format)
 	if err != nil {
 		panic(err)
 	}
@@ -89,8 +89,8 @@ func ServiceFromChain(encoded map[string]interface{}) map[string]interface{} {
 	urls := encoded["urls"].([]interface{})
 
 	return map[string]interface{}{
-		"id":             "#" + id,
-		"type":           serviceTypes,
+		"id":              "#" + id,
+		"type":            serviceTypes,
 		"serviceEndpoint": urls,
 	}
 }
@@ -114,11 +114,11 @@ func LinkedInfoFromChain(encoded map[string]interface{}) map[string]interface{} 
 	didRec := DocumentFromChain(details)
 
 	did := map[string]interface{}{
-		"uri":                FromChain(identifier),
-		"authentication":     didRec["authentication"],
-		"assertionMethod":    didRec["assertionMethod"],
+		"uri":                  FromChain(identifier),
+		"authentication":       didRec["authentication"],
+		"assertionMethod":      didRec["assertionMethod"],
 		"capabilityDelegation": didRec["capabilityDelegation"],
-		"keyAgreement":       didRec["keyAgreement"],
+		"keyAgreement":         didRec["keyAgreement"],
 	}
 
 	services := ServicesFromChain(serviceEndpoints)
