@@ -11,10 +11,18 @@ To build the SDK and see changes, follow these steps:
    git clone <repository_url>
    cd <repository_directory>
 
-2. Install dependencies and setup modules using setup.py :
+2. Install dependencies:
+
+   Make sure that subkey command line utility is installed and added to $PATH variable, [for detailed installation guide](https://docs.substrate.io/reference/command-line-tools/subkey/)
 
      ```bash
      go get
+     ```
+
+     ```bash
+     cd demo
+     go get
+     ```
 
 ## Experimenting with SDK Methods
 ## Demo Methods
@@ -27,7 +35,8 @@ The `demo-statement` method allows you to interact with statement-related functi
 To run the statement demo, execute the following command:
 
 ```bash
-go run "demo/main.go"
+cd demo
+go run main.go
 ```
 
 The output of each demo script will demonstrate the functionality of the corresponding method. For a detailed structure of the demo scripts, refer to the source code.
