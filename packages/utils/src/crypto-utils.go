@@ -69,6 +69,10 @@ func Blake2AsHex(data []byte, digestSize int) string {
 	return hex.EncodeToString(hash[:digestSize])
 }
 
+func KeyPairFromURI(uri string) (signature.KeyringPair, error) {
+	return signature.KeyringPairFromSecret(uri,Ss58Format)
+}
+
 func Blake2AsU8a(data []byte, bitLength int, key []byte) ([]byte, error) {
 	// Convert data to []byte
 
