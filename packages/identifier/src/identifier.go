@@ -163,9 +163,9 @@ func IsValidIdentifier(input string) (bool, string) { // check again
 	return false, "Prefix mismatch"
 }
 
-func UriToIdentifier(uri string) (string, error) {
+func UriToIdentifier(uri string) string {
 	if uri == "" {
-		return "", errors.New("URI must be a non-empty string")
+		panic("URI must be a non-empty string")
 	}
 
 	var identifier string
@@ -180,15 +180,15 @@ func UriToIdentifier(uri string) (string, error) {
 	if foundPrefix != "" {
 		identifier = strings.TrimPrefix(uri, foundPrefix)
 	} else {
-		return "", errors.New("Unknown prefix")
+		return ""
 	}
 
 	isValid, errorMessage := CheckIdentifier(identifier)
 	if !isValid {
-		return "", fmt.Errorf("%w: %s", errors.New("Invalid identifier"), errorMessage)
+		panic(errorMessage)
 	}
 
-	return identifier, nil
+	return identifier
 }
 
 func IdentifierToUri(identifier string) (string, error) {

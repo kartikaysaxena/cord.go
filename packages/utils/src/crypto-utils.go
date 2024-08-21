@@ -225,20 +225,6 @@ func CreateAccount() (signature.KeyringPair, error) {
 	return signature.KeyringPairFromSecret(mnemonic, Ss58Format)
 }
 
-// func NewCall(m *types.Metadata, call string, args ...interface{}) (types.Call, error) {
-// 	c, err := m.FindCallIndex(call)
-// 	var a []byte
-// 	for _, arg := range args {
-// 		e, err := codec.Encode(arg)
-// 		if err != nil {
-// 			return types.Call{}, err
-// 		}
-// 		a = append(a, e...)
-// 	}
-// 	if err != nil {
-// 		return types.Call{}, err
-// 	}
-// 	return types.Call{
-// 		CallIndex: c,
-// 		Args:      a}, nil
-// }
+func InterfaceToBytes(data []byte, err error) []byte {
+	return types.NewBytes(data)
+}
