@@ -174,6 +174,11 @@ func getNextNonce(api *gsrpc.SubstrateAPI, address string) (uint64, error) {
 
 func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[string]interface{}) extrinsic.DynamicExtrinsic {
 
+	meta, err := api.RPC.State.GetMetadataLatest()
+	if err != nil {
+		panic(err)
+	}
+
 	var accountInfo types.AccountInfo
 	key, err := types.CreateStorageKey(meta, "System", "Account", []byte(params["submitter"].(string)))
 	if err != nil {
@@ -194,6 +199,21 @@ func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[str
         "submitter": params["submitter"],
         "block_number": accountInfo.Nonce,
 	}
+
+	sig := map[string]interface{}{
+		"sign": func(data map[string]interface{}) string {
+			return fmt.Sprintf("Signed data: %v", data)
+		},
+		"key_relationship": params["key_relationship"],
+		"did":              params["did"],
+	}
+
+	call, err := types.NewCall(meta, "Did", "submit_did_call", map[string]interface{}{
+		"did_call": input,
+		"submit_did_call": sig,
+	})
+
+	return extrinsic.NewDynamicExtrinsic(&call) 
 }
 
 // Creates a new DID using the provided mnemonic and service endpoints
@@ -388,7 +408,7 @@ func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Met
 
 
 
-func AuthorizeTx(creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback func (), address string, signingOptions ...interface{},api *gsrpc.SubstrateAPI) (extrinsic.DynamicExtrinsic,error) {
+func AuthorizeTx(api *gsrpc.SubstrateAPI,creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback func (), address string, signingOptions ...interface{}) (extrinsic.DynamicExtrinsic,error) {
 	if signingOptions == nil {
 		signingOptions = []interface{}{}
 	}
@@ -405,5 +425,14 @@ func AuthorizeTx(creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback
 		panic(err)
 	}
 
-
+	didAuth := GenerateDidAuthenticatedTransaction(api, map[string]interface{}{
+            "did": creatorURI,
+            "key_relationship": keyRelationship,
+            "sign": signcallback,
+            "call": ext,
+            "tx_counter": tx_counter,
+            "submitter": address,
+        })
+	return didAuth, nil	
+	
 }
