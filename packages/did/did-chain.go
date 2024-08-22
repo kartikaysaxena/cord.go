@@ -22,7 +22,6 @@ import (
 
 type TxInput struct {
 	Key DidVerificationKey
-
 }
 
 var cryptoTypeMap = map[int]string{
@@ -88,7 +87,7 @@ func PublicKeyToChain(key map[string]interface{}) map[string]string {
 	return map[string]string{cryptoType: "0x" + publicKey}
 }
 
-func GetStoreTx( api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter string, signCallback func([]byte) map[string]string) (ext.DynamicExtrinsic, error) {
+func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter string, signCallback func([]byte) map[string]string) (ext.DynamicExtrinsic, error) {
 
 	authentication := input["authentication"].(DidVerificationKey)
 	assertionMethod := input["assertion_method"]
@@ -113,12 +112,12 @@ func GetStoreTx( api *gsrpc.SubstrateAPI, input map[string]interface{}, submitte
 	}
 
 	apiInput := map[string]interface{}{
-		"did":                 did,
-		"submitter":           submitter,
-		"new_assertion_key":   newAssertionKey,
-		"new_delegation_key":  newDelegationKey,
+		"did":                    did,
+		"submitter":              submitter,
+		"new_assertion_key":      newAssertionKey,
+		"new_delegation_key":     newDelegationKey,
 		"new_key_agreement_keys": newKeyAgreementKeys,
-		"new_service_details": newServiceDetails,
+		"new_service_details":    newServiceDetails,
 	}
 
 	byteEncoded, err := codec.Encode(apiInput)
@@ -136,8 +135,7 @@ func GetStoreTx( api *gsrpc.SubstrateAPI, input map[string]interface{}, submitte
 		"details":   apiInput,
 		"signature": encodedSignature,
 	})
-	
-	
+
 	return ext.NewDynamicExtrinsic(&extrinsic), nil
 }
 
@@ -152,11 +150,10 @@ func increaseNonce(currentNonce, increment uint64) uint64 {
 
 func getNextNonce(api *gsrpc.SubstrateAPI, address string) (uint64, error) {
 
-	meta , err := api.RPC.State.GetMetadataLatest()
+	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
 		return 0, err
 	}
-	
 
 	storageKey, err := types.CreateStorageKey(meta, "Did", "Did", []byte(address))
 	if err != nil {
@@ -193,11 +190,11 @@ func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[str
 	didStr := fmt.Sprintf("%v", params["did"])
 
 	input := map[string]interface{}{
-		"tx_counter": params["tx_counter"],
-		"did": ToChain(DidUri(didStr)),
-        "call": params["call"],
-        "submitter": params["submitter"],
-        "block_number": accountInfo.Nonce,
+		"tx_counter":   params["tx_counter"],
+		"did":          ToChain(DidUri(didStr)),
+		"call":         params["call"],
+		"submitter":    params["submitter"],
+		"block_number": accountInfo.Nonce,
 	}
 
 	sig := map[string]interface{}{
@@ -209,15 +206,15 @@ func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[str
 	}
 
 	call, err := types.NewCall(meta, "Did", "submit_did_call", map[string]interface{}{
-		"did_call": input,
+		"did_call":        input,
 		"submit_did_call": sig,
 	})
 
-	return extrinsic.NewDynamicExtrinsic(&call) 
+	return extrinsic.NewDynamicExtrinsic(&call)
 }
 
 // Creates a new DID using the provided mnemonic and service endpoints
-func CreateDid(api *gsrpc.SubstrateAPI , submitterAccount string, mnemonic string, didServiceEndpoint []map[string]interface{}) (map[string]interface{}, error) {
+func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount string, mnemonic string, didServiceEndpoint []map[string]interface{}) (map[string]interface{}, error) {
 
 	// Generate mnemonic if not provided
 	theMnemonic := mnemonic
@@ -237,8 +234,8 @@ func CreateDid(api *gsrpc.SubstrateAPI , submitterAccount string, mnemonic strin
 	if didServiceEndpoint == nil {
 		didServiceEndpoint = []map[string]interface{}{
 			{
-				"id":             "#my-service",
-				"type":           []string{"service-type"},
+				"id":               "#my-service",
+				"type":             []string{"service-type"},
 				"service_endpoint": []string{"https://www.example.com"},
 			},
 		}
@@ -246,11 +243,11 @@ func CreateDid(api *gsrpc.SubstrateAPI , submitterAccount string, mnemonic strin
 
 	// Get transaction for creating the DID
 	didCreationTx, err := GetStoreTx(api, map[string]interface{}{
-		"authentication":    authentication,
-		"key_agreement":     keyAgreement,
-		"assertion_method":  assertionMethod,
+		"authentication":        authentication,
+		"key_agreement":         keyAgreement,
+		"assertion_method":      assertionMethod,
 		"capability_delegation": capabilityDelegation,
-		"service":           didServiceEndpoint,
+		"service":               didServiceEndpoint,
 	}, submitterAccount, func(data []byte) map[string]string {
 		return map[string]string{
 			"signature": "0x" + hex.EncodeToString(data),
@@ -270,11 +267,11 @@ func CreateDid(api *gsrpc.SubstrateAPI , submitterAccount string, mnemonic strin
 
 	key := DidVerificationKey{
 		PublicKey: authentication.PublicKey,
-		Type: "sr25519",
+		Type:      "sr25519",
 	}
 
 	didUri, err := GetDidUriFromKey(key)
-	err = 	api.Client.Call("DidApi.query", ToChain(didUri))
+	err = api.Client.Call("DidApi.query", ToChain(didUri))
 	if err != nil {
 		panic(err)
 	}
@@ -299,28 +296,27 @@ func callIndex(meta *types.Metadata, call string) types.CallIndex {
 
 func methodMappingFunc(meta *types.Metadata) map[types.CallIndex]string {
 	methodMappingCallIndex := map[types.CallIndex]string{
-		callIndex(meta, "Statement"):                         "authentication",
-		callIndex(meta, "Schema"):                            "authentication",
-		callIndex(meta, "ChainSpace.add_admin_delegate"):     "capability_delegation",
-		callIndex(meta, "ChainSpace.add_audit_delegate"):     "capability_delegation",
-		callIndex(meta, "ChainSpace.add_delegate"):           "capability_delegation",
-		callIndex(meta, "ChainSpace.remove_delegate"):        "capability_delegation",
-		callIndex(meta, "ChainSpace.create"):                 "authentication",
-		callIndex(meta, "ChainSpace.archive"):                "authentication",
-		callIndex(meta, "ChainSpace.restore"):                "authentication",
-		callIndex(meta, "ChainSpace.subspace_create"):        "authentication",
+		callIndex(meta, "Statement"):                                  "authentication",
+		callIndex(meta, "Schema"):                                     "authentication",
+		callIndex(meta, "ChainSpace.add_admin_delegate"):              "capability_delegation",
+		callIndex(meta, "ChainSpace.add_audit_delegate"):              "capability_delegation",
+		callIndex(meta, "ChainSpace.add_delegate"):                    "capability_delegation",
+		callIndex(meta, "ChainSpace.remove_delegate"):                 "capability_delegation",
+		callIndex(meta, "ChainSpace.create"):                          "authentication",
+		callIndex(meta, "ChainSpace.archive"):                         "authentication",
+		callIndex(meta, "ChainSpace.restore"):                         "authentication",
+		callIndex(meta, "ChainSpace.subspace_create"):                 "authentication",
 		callIndex(meta, "ChainSpace.update_transaction_capacity_sub"): "authentication",
-		callIndex(meta, "Did"):                               "authentication",
-		callIndex(meta, "Did.create"):                        "",
-		callIndex(meta, "Did.submit_did_call"):               "",
-		callIndex(meta, "DidLookup"):                         "authentication",
-		callIndex(meta, "DidName"):                           "authentication",
-		callIndex(meta, "NetworkScore"):                      "authentication",
-		callIndex(meta, "Asset"):                             "authentication",
+		callIndex(meta, "Did"):                                        "authentication",
+		callIndex(meta, "Did.create"):                                 "",
+		callIndex(meta, "Did.submit_did_call"):                        "",
+		callIndex(meta, "DidLookup"):                                  "authentication",
+		callIndex(meta, "DidName"):                                    "authentication",
+		callIndex(meta, "NetworkScore"):                               "authentication",
+		callIndex(meta, "Asset"):                                      "authentication",
 	}
 	return methodMappingCallIndex
 }
-
 
 func findCallSectionIndex(call string, meta types.Metadata) uint8 {
 	m := meta.AsMetadataV14
@@ -359,7 +355,6 @@ func findCallMethodIndex(call string, meta types.Metadata) uint8 {
 	}
 	return 0
 }
-
 
 func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Metadata) string {
 	utilityIndex := findCallSectionIndex("utility", meta)
@@ -406,9 +401,7 @@ func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Met
 	return ""
 }
 
-
-
-func AuthorizeTx(api *gsrpc.SubstrateAPI,creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback func (), address string, signingOptions ...interface{}) (extrinsic.DynamicExtrinsic,error) {
+func AuthorizeTx(api *gsrpc.SubstrateAPI, creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback func(), address string, signingOptions ...interface{}) (extrinsic.DynamicExtrinsic, error) {
 	if signingOptions == nil {
 		signingOptions = []interface{}{}
 	}
@@ -426,13 +419,13 @@ func AuthorizeTx(api *gsrpc.SubstrateAPI,creatorURI string, ext extrinsic.Dynami
 	}
 
 	didAuth := GenerateDidAuthenticatedTransaction(api, map[string]interface{}{
-            "did": creatorURI,
-            "key_relationship": keyRelationship,
-            "sign": signcallback,
-            "call": ext,
-            "tx_counter": tx_counter,
-            "submitter": address,
-        })
-	return didAuth, nil	
-	
+		"did":              creatorURI,
+		"key_relationship": keyRelationship,
+		"sign":             signcallback,
+		"call":             ext,
+		"tx_counter":       tx_counter,
+		"submitter":        address,
+	})
+	return didAuth, nil
+
 }

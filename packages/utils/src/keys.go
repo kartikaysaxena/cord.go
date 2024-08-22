@@ -6,7 +6,7 @@ import (
 
 type DidKeypair struct {
 	Authentication signature.KeyringPair
-	Assertion	   signature.KeyringPair
+	Assertion      signature.KeyringPair
 	Delegation     signature.KeyringPair
 	KeyAgreement   signature.KeyringPair
 }
@@ -38,10 +38,9 @@ func GenerateKeypairs(uri string) (DidKeypair, error) {
 
 	return DidKeypair{
 		Authentication: authentication,
-		Assertion: assertion,
-		Delegation: capabilityDelegation,
-		KeyAgreement: keyAgreement,
-	},nil
-
+		Assertion:      assertion,
+		Delegation:     capabilityDelegation,
+		KeyAgreement:   keyAgreement,
+	}, nil
 
 }

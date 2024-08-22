@@ -8,13 +8,14 @@ import (
 	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/rpc/author"
+	// "github.com/kartikaysaxena/substrateinterface/scale"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	types "github.com/kartikaysaxena/substrateinterface/types"
 	"github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 )
 
-func GetURIForSpace(spaceDigest string, creatorURI string, api gsrpc.SubstrateAPI) (map[string]string, error) {
+func GetURIForSpace(spaceDigest string, creatorURI string, api gsrpc.SubstrateAPI) map[string]string {
 
 	bytes, err := codec.Encode(spaceDigest)
 	if err != nil {
@@ -25,18 +26,18 @@ func GetURIForSpace(spaceDigest string, creatorURI string, api gsrpc.SubstrateAP
 	encodedCreator, err := codec.Encode(did.ToChain(did.DidUri(creatorURI)))
 	scaleEncodedCreatorAccountID, err := types.NewAccountID(encodedCreator)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	scaleEncodedCreator, err := codec.Encode(scaleEncodedCreatorAccountID)
 
-	digest := utils.Blake2AsHex(append(scaleEncodedSpaceDigest, scaleEncodedCreator[0]),256)
+	digest := utils.Blake2AsHex(append(scaleEncodedSpaceDigest, scaleEncodedCreator[0]), 256)
 
 	chainSpaceURI := identifier.HashToURI(digest, utils.SPACE_IDENT, utils.SPACE_PREFIX)
 
 	identifierToUri, err := identifier.UriToIdentifier(chainSpaceURI)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	scaleAuthDigest := utils.InterfaceToBytes(codec.Encode(identifierToUri))
 
@@ -49,41 +50,80 @@ func GetURIForSpace(spaceDigest string, creatorURI string, api gsrpc.SubstrateAP
 	authorizationURI := identifier.HashToURI(authDigest, utils.AUTH_IDENT, utils.AUTH_PREFIX)
 
 	return map[string]string{
-		"uri":             chainSpaceURI,
+		"uri":              chainSpaceURI,
 		"authorizationURI": authorizationURI,
-	}, nil
+	}
 }
 
-func SudoApproveChainSpace(authority *signature.KeyringPair, spaceURI string, capacity int, api *gsrpc.SubstrateAPI) (*author.ExtrinsicStatusSubscription,error) {
+func GetURIForAuthorization(spaceURI string, delegateURI string, creatorURI string) string {
+
+	ident, err := identifier.UriToIdentifier(spaceURI)
+	if err != nil {
+		panic(err)
+	}
+
+	scaleEncodedSpaceId, err := codec.Encode(types.NewBytes(utils.InterfaceToBytes(codec.Encode(ident)))) //
+
+	scaleEncodedAuthDelegateID, err := types.NewAccountID(utils.InterfaceToBytes(codec.Encode(did.ToChain(did.DidUri(delegateURI)))))
+	if err != nil {
+		panic(err)
+	}
+
+	scaleEncodedAuthDelegate, err := codec.Encode(scaleEncodedAuthDelegateID) //
+	if err != nil {
+		panic(err)
+	}
+
+	scaleEncodedAuthCreatorID, err := types.NewAccountID(utils.InterfaceToBytes(codec.Encode(did.ToChain(did.DidUri(creatorURI)))))
+	if err != nil {
+		panic(err)
+	}
+
+	scaleEncodedAuthCreator, err := codec.Encode(scaleEncodedAuthCreatorID) //
+	if err != nil {
+		panic(err)
+	}
+
+	var totalBytes []byte
+
+	totalBytes = append(append(append(totalBytes, scaleEncodedSpaceId...), scaleEncodedAuthDelegate...), scaleEncodedAuthCreator...)
+
+	authDigest := utils.Blake2AsHex(totalBytes, 256)
+	auth_uri := identifier.HashToURI(authDigest, utils.AUTH_IDENT, utils.AUTH_PREFIX)
+
+	return auth_uri
+}
+
+func SudoApproveChainSpace(authority *signature.KeyringPair, spaceURI string, capacity int, api *gsrpc.SubstrateAPI) (*author.ExtrinsicStatusSubscription, error) {
 
 	spaceID, err := identifier.UriToIdentifier(spaceURI)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	callTx, err := types.NewCall(meta, "ChainSpace.approve", map[string]interface{}{
-		"space_id":    spaceID,
+		"space_id":     spaceID,
 		"txn_capacity": capacity,
 	})
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
-	sudoTx, err := types.NewCall(meta,"Sudo.sudo", map[string]interface{}{
+	sudoTx, err := types.NewCall(meta, "Sudo.sudo", map[string]interface{}{
 		"call": callTx,
 	})
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	ext := extrinsic.NewDynamicExtrinsic(&sudoTx)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	return api.RPC.Author.SubmitAndWatchDynamicExtrinsic(ext)
@@ -93,10 +133,10 @@ func PrepareCreateSpaceExtrinsic(chainSpace map[string]string, creatorURI string
 
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
-	tx, err := types.NewCall(meta,"ChainSpace.create", map[string]interface{}{
+	tx, err := types.NewCall(meta, "ChainSpace.create", map[string]interface{}{
 		"space_code": chainSpace["digest"],
 	})
 	if err != nil {
@@ -105,7 +145,7 @@ func PrepareCreateSpaceExtrinsic(chainSpace map[string]string, creatorURI string
 
 	ext := extrinsic.NewDynamicExtrinsic(&tx)
 
-	extrinsic, err := did.AuthorizeTx(api,creatorURI, ext, signCallback, authorAccount.Address, nil)
+	extrinsic, err := did.AuthorizeTx(api, creatorURI, ext, signCallback, authorAccount.Address, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +205,7 @@ func DispatchToChain(chainSpace map[string]string, creatorURI string, authorAcco
 	defer sub.Unsubscribe()
 
 	return map[string]string{
-		"uri":          chainSpace["uri"],
+		"uri":           chainSpace["uri"],
 		"authorization": chainSpace["authorization_uri"],
 	}, nil
 }
@@ -207,7 +247,7 @@ func DispatchSubspaceCreateToChain(api *gsrpc.SubstrateAPI, chainSpace map[strin
 	defer sub.Unsubscribe()
 
 	return map[string]string{
-		"uri":          chainSpace["uri"],
+		"uri":           chainSpace["uri"],
 		"authorization": chainSpace["authorization_uri"],
 	}, nil
 }
@@ -222,7 +262,7 @@ func DispatchUpdateTxCapacityToChain(space string, creatorURI string, authorAcco
 	newStr := strings.Replace(space, "space:cord:", "", -1)
 
 	tx, err := types.NewCall(meta, "ChainSpace.update_transaction_capacity_sub", map[string]interface{}{
-		"space_id":       newStr,
+		"space_id":         newStr,
 		"new_txn_capacity": newCapacity,
 	})
 	if err != nil {
@@ -247,7 +287,6 @@ func DispatchUpdateTxCapacityToChain(space string, creatorURI string, authorAcco
 	}
 
 	defer sub.Unsubscribe()
-
 
 	return map[string]string{
 		"uri": space,

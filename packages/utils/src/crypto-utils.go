@@ -70,7 +70,7 @@ func Blake2AsHex(data []byte, digestSize int) string {
 }
 
 func KeyPairFromURI(uri string) (signature.KeyringPair, error) {
-	return signature.KeyringPairFromSecret(uri,Ss58Format)
+	return signature.KeyringPairFromSecret(uri, Ss58Format)
 }
 
 func Blake2AsU8a(data []byte, bitLength int, key []byte) ([]byte, error) {
