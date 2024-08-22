@@ -1,7 +1,7 @@
 package chainspace
 
 import (
-	"github.com/centrifuge/go-substrate-rpc-client/signature"
+	"github.com/kartikaysaxena/substrateinterface/signature"
 	did "github.com/kartikaysaxena/cord.go/packages/did"
 	identifier "github.com/kartikaysaxena/cord.go/packages/identifier/src"
 	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
@@ -59,15 +59,15 @@ func SudoApproveChainSpace(authority *signature.KeyringPair, spaceURI string, ca
 		return nil,err
 	}
 
-	callTx, err := api.R("ChainSpace", "approve", map[string]interface{}{
-		"space_id":    spaceID,
-		"txn_capacity": capacity,
-	})
+	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
 		return nil,err
 	}
 
-	meta, err := api.RPC.State.GetMetadataLatest()
+	callTx, err := types.NewCall(meta, "ChainSpace.approve", map[string]interface{}{
+		"space_id":    spaceID,
+		"txn_capacity": capacity,
+	})
 	if err != nil {
 		return nil,err
 	}
@@ -87,7 +87,7 @@ func SudoApproveChainSpace(authority *signature.KeyringPair, spaceURI string, ca
 	return api.RPC.Author.SubmitAndWatchDynamicExtrinsic(ext)
 }
 
-func PrepareCreateSpaceExtrinsic(chainSpace map[string]string, creatorURI string, signCallback func(), authorAccount *sdk.CordKeyringPair) (*sdk.Extrinsic, error) {
+func PrepareCreateSpaceExtrinsic(chainSpace map[string]string, creatorURI string, signCallback func(), authorAccount *signature.KeyringPair, api *gsrpc.SubstrateAPI) (*extrinsic.DynamicExtrinsic, error) {
 
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
@@ -101,7 +101,9 @@ func PrepareCreateSpaceExtrinsic(chainSpace map[string]string, creatorURI string
 		return nil, err
 	}
 
-	extrinsic, err := Did{}.AuthorizeTx(creatorURI, tx, signCallback, authorAccount.SS58Address())
+	ext := extrinsic.NewDynamicExtrinsic(&tx)
+
+	extrinsic, err := did.AuthorizeTx(creatorURI, ext, signCallback, authorAccount.Address, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,14 +111,26 @@ func PrepareCreateSpaceExtrinsic(chainSpace map[string]string, creatorURI string
 	return extrinsic, nil
 }
 
-func DispatchToChain(chainSpace map[string]string, creatorURI string, authorAccount *sdk.CordKeyringPair, signCallback func()) (map[string]string, error) {
-	extrinsic, err := PrepareCreateSpaceExtrinsic(chainSpace, creatorURI, signCallback, authorAccount)
+func DispatchToChain(chainSpace map[string]string, creatorURI string, authorAccount *signature.KeyringPair, signCallback func(), api *gsrpc.SubstrateAPI) (map[string]string, error) {
+	ext, err := PrepareCreateSpaceExtrinsic(chainSpace, creatorURI, signCallback, authorAccount, api)
 	if err != nil {
 		return nil, err
 	}
 
-	api := ConfigService{}.GetAPI()
-	extrinsic, err = api.CreateSignedExtrinsic(extrinsic, authorAccount)
+
+	// extr := ext.Sign(authorAccount)
+
+	err = ext.Sign(
+		*authorAccount,
+		meta,
+		extrinsic.WithEra(types.ExtrinsicEra{IsImmortalEra: true}, genesisHash),
+		extrinsic.WithNonce(types.NewUCompactFromUInt(uint64(accountInfo.Nonce))),
+		extrinsic.WithTip(types.NewUCompactFromUInt(0)),
+		extrinsic.WithSpecVersion(rv.SpecVersion),
+		extrinsic.WithTransactionVersion(rv.TransactionVersion),
+		extrinsic.WithGenesisHash(genesisHash),
+	)
+	// extrinsic, err = api.CreateSignedExtrinsic(extrinsic, authorAccount)
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,7 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/rs/cors v1.8.2 // indirect
+	github.com/vedhavyas/go-subkey v1.0.4
 	golang.org/x/crypto v0.7.0
 	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
