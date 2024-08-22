@@ -1,16 +1,21 @@
 package did
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"math"
 	"net/url"
 	"regexp"
 	"strings"
 
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
-	ext "github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 	"github.com/kartikaysaxena/substrateinterface/types"
 	"github.com/kartikaysaxena/substrateinterface/types/codec"
+	"github.com/kartikaysaxena/substrateinterface/types/extrinsic"
+	ext "github.com/kartikaysaxena/substrateinterface/types/extrinsic"
+	"github.com/vedhavyas/go-subkey/scale"
 
 	crypto_utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
 )
@@ -136,6 +141,81 @@ func GetStoreTx( api *gsrpc.SubstrateAPI, input map[string]interface{}, submitte
 	return ext.NewDynamicExtrinsic(&extrinsic), nil
 }
 
+const MAX_NONCE_VALUE = uint64(math.MaxUint64)
+
+func increaseNonce(currentNonce, increment uint64) uint64 {
+	if currentNonce == MAX_NONCE_VALUE {
+		return increment
+	}
+	return currentNonce + increment
+}
+
+func getNextNonce(api *gsrpc.SubstrateAPI, address string) (uint64, error) {
+
+	meta , err := api.RPC.State.GetMetadataLatest()
+	if err != nil {
+		return 0, err
+	}
+	
+
+	storageKey, err := types.CreateStorageKey(meta, "Did", "Did", []byte(address))
+	if err != nil {
+		return 0, err
+	}
+
+	var accountInfo types.AccountInfo
+	_, err = api.RPC.State.GetStorageLatest(storageKey, &accountInfo)
+
+	var storageKeys []types.StorageKey
+	storageKeys = append(storageKeys, storageKey)
+
+	return increaseNonce(uint64(accountInfo.Nonce), 1), nil
+}
+
+func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[string]interface{}) extrinsic.DynamicExtrinsic {
+
+	meta, err := api.RPC.State.GetMetadataLatest()
+	if err != nil {
+		panic(err)
+	}
+
+	var accountInfo types.AccountInfo
+	key, err := types.CreateStorageKey(meta, "System", "Account", []byte(params["submitter"].(string)))
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = api.RPC.State.GetStorageLatest(key, &accountInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	didStr := fmt.Sprintf("%v", params["did"])
+
+	input := map[string]interface{}{
+		"tx_counter": params["tx_counter"],
+		"did": ToChain(DidUri(didStr)),
+        "call": params["call"],
+        "submitter": params["submitter"],
+        "block_number": accountInfo.Nonce,
+	}
+
+	sig := map[string]interface{}{
+		"sign": func(data map[string]interface{}) string {
+			return fmt.Sprintf("Signed data: %v", data)
+		},
+		"key_relationship": params["key_relationship"],
+		"did":              params["did"],
+	}
+
+	call, err := types.NewCall(meta, "Did", "submit_did_call", map[string]interface{}{
+		"did_call": input,
+		"submit_did_call": sig,
+	})
+
+	return extrinsic.NewDynamicExtrinsic(&call) 
+}
+
 // Creates a new DID using the provided mnemonic and service endpoints
 func CreateDid(api *gsrpc.SubstrateAPI , submitterAccount string, mnemonic string, didServiceEndpoint []map[string]interface{}) (map[string]interface{}, error) {
 
@@ -209,3 +289,150 @@ func CreateDid(api *gsrpc.SubstrateAPI , submitterAccount string, mnemonic strin
 	}, nil
 }
 
+func callIndex(meta *types.Metadata, call string) types.CallIndex {
+	c, err := meta.FindCallIndex(call)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+func methodMappingFunc(meta *types.Metadata) map[types.CallIndex]string {
+	methodMappingCallIndex := map[types.CallIndex]string{
+		callIndex(meta, "Statement"):                         "authentication",
+		callIndex(meta, "Schema"):                            "authentication",
+		callIndex(meta, "ChainSpace.add_admin_delegate"):     "capability_delegation",
+		callIndex(meta, "ChainSpace.add_audit_delegate"):     "capability_delegation",
+		callIndex(meta, "ChainSpace.add_delegate"):           "capability_delegation",
+		callIndex(meta, "ChainSpace.remove_delegate"):        "capability_delegation",
+		callIndex(meta, "ChainSpace.create"):                 "authentication",
+		callIndex(meta, "ChainSpace.archive"):                "authentication",
+		callIndex(meta, "ChainSpace.restore"):                "authentication",
+		callIndex(meta, "ChainSpace.subspace_create"):        "authentication",
+		callIndex(meta, "ChainSpace.update_transaction_capacity_sub"): "authentication",
+		callIndex(meta, "Did"):                               "authentication",
+		callIndex(meta, "Did.create"):                        "",
+		callIndex(meta, "Did.submit_did_call"):               "",
+		callIndex(meta, "DidLookup"):                         "authentication",
+		callIndex(meta, "DidName"):                           "authentication",
+		callIndex(meta, "NetworkScore"):                      "authentication",
+		callIndex(meta, "Asset"):                             "authentication",
+	}
+	return methodMappingCallIndex
+}
+
+
+func findCallSectionIndex(call string, meta types.Metadata) uint8 {
+	m := meta.AsMetadataV14
+	for _, mod := range m.Pallets {
+		if !mod.HasCalls {
+			continue
+		}
+		if string(mod.Name) != call {
+			continue
+		}
+		return uint8(mod.Index)
+	}
+	return 0
+}
+
+func findCallMethodIndex(call string, meta types.Metadata) uint8 {
+	m := meta.AsMetadataV14
+	for _, mod := range m.Pallets {
+		if !mod.HasCalls {
+			continue
+		}
+		if string(mod.Name) != call {
+			continue
+		}
+		callType := mod.Calls.Type.Int64()
+
+		if typ, ok := m.EfficientLookup[callType]; ok {
+			if len(typ.Def.Variant.Variants) > 0 {
+				for _, vars := range typ.Def.Variant.Variants {
+					if string(vars.Name) == call {
+						return uint8(vars.Index)
+					}
+				}
+			}
+		}
+	}
+	return 0
+}
+
+
+func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Metadata) string {
+	utilityIndex := findCallSectionIndex("utility", meta)
+	batchIndex := findCallMethodIndex("batch", meta)
+	batchAllIndex := findCallMethodIndex("batchAll", meta)
+	forceBatchIndex := findCallMethodIndex("forceBatch", meta)
+
+	if call.Method.CallIndex.SectionIndex == utilityIndex &&
+		(call.Method.CallIndex.MethodIndex == batchIndex ||
+			call.Method.CallIndex.MethodIndex == batchAllIndex ||
+			call.Method.CallIndex.MethodIndex == forceBatchIndex) {
+
+		var subCalls []extrinsic.DynamicExtrinsic
+
+		decoder := scale.NewDecoder(bytes.NewReader(call.Method.Args))
+		err := decoder.Decode(&subCalls)
+		if err != nil {
+			fmt.Println("Error decoding Args[0]:", err)
+			return ""
+		}
+
+		var keyRelationships []string
+		for _, subCall := range subCalls {
+			relationship := getKeyRelationshipForMethod(subCall, meta)
+			keyRelationships = append(keyRelationships, relationship)
+		}
+
+		if len(keyRelationships) > 0 {
+			firstRelationship := keyRelationships[0]
+			allSame := true
+			for _, keyRelationship := range keyRelationships {
+				if keyRelationship != firstRelationship {
+					allSame = false
+					break
+				}
+			}
+			if allSame {
+				return firstRelationship
+			}
+		}
+
+		return ""
+	}
+	return ""
+}
+
+
+
+func AuthorizeTx(api *gsrpc.SubstrateAPI,creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback func (), address string, signingOptions ...interface{}) (extrinsic.DynamicExtrinsic,error) {
+	if signingOptions == nil {
+		signingOptions = []interface{}{}
+	}
+
+	meta, err := api.RPC.State.GetMetadataLatest()
+	if err != nil {
+		panic(err)
+	}
+
+	keyRelationship := getKeyRelationshipForMethod(ext, *meta)
+
+	tx_counter, err := getNextNonce(api, address)
+	if err != nil {
+		panic(err)
+	}
+
+	didAuth := GenerateDidAuthenticatedTransaction(api, map[string]interface{}{
+            "did": creatorURI,
+            "key_relationship": keyRelationship,
+            "sign": signcallback,
+            "call": ext,
+            "tx_counter": tx_counter,
+            "submitter": address,
+        })
+	return didAuth, nil	
+	
+}
