@@ -91,7 +91,7 @@ func dispatchRatingToChain(api *gsrpc.SubstrateAPI,ratingEntry map[string]string
 	return ratingEntry["entry_uri"], nil
 }
 
-// Revoke a rating entry from the blockchain
+
 func dispatchRevokeRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string]interface{}, authorAccount signature.KeyringPair, authorizationURI string, signCallback func()) (string, error) {
 
 	authorizationID, err := identifier.UriToIdentifier(authorizationURI)
@@ -145,7 +145,7 @@ func dispatchRevokeRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string
 	return ratingEntry["entry_uri"].(string), nil
 }
 
-// Revise an existing rating entry on the blockchain
+
 func dispatchReviseRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string]interface{}, authorAccount signature.KeyringPair, authorizationURI string, signCallback func()) (string, error) {
 
 	authorizationID, err := identifier.UriToIdentifier(authorizationURI)
@@ -203,7 +203,7 @@ func dispatchReviseRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string
 	return ratingEntry["entry_uri"].(string), nil
 }
 
-// Decode the rating value
+
 func decodeRatingValue(encodedRating int64, mod int64) int64 {
 	if mod == 0 {
 		mod = 10
@@ -211,7 +211,6 @@ func decodeRatingValue(encodedRating int64, mod int64) int64 {
 	return encodedRating / mod
 }
 
-// Decode entry details from chain
 func decodeEntryDetailsFromChain(encoded types.Bytes, stmtURI, timeZone string) map[string]interface{} {
 
 	if timeZone == "" {
@@ -264,7 +263,7 @@ func decodeEntryDetailsFromChain(encoded types.Bytes, stmtURI, timeZone string) 
 		"creator_uri":   did.FromChain(encodedEntry["creator_id"].([]byte)),
 		"entry_type":    encodedEntry["entry_type"],
 		"reference_id":  reference_id,
-		"created_at":    utils.ConvertUnixTimeToDateTime(float64(encodedEntry["created_at"].(int64))/1000.0, timeZone), // Convert to seconds from milliseconds
+		"created_at":    utils.ConvertUnixTimeToDateTime(float64(encodedEntry["created_at"].(int64))/1000.0, timeZone),
 	}
 	
 	return decodedDetails
@@ -356,7 +355,6 @@ func fetchEntityAggregateScoreFromChain(api *gsrpc.SubstrateAPI, entity string, 
 				panic(err)
 			}
 
-			// Append each decoded score to the results
 			decodedEntries = append(decodedEntries, map[string]interface{}{
 				"entity_id":    entity,
 				"rating_type":  ratingTypeKey,
