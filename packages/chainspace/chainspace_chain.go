@@ -8,7 +8,6 @@ import (
 	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/rpc/author"
-	// "github.com/kartikaysaxena/substrateinterface/scale"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	types "github.com/kartikaysaxena/substrateinterface/types"
 	"github.com/kartikaysaxena/substrateinterface/types/codec"

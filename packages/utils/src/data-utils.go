@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"time"
+
 	"golang.org/x/crypto/blake2b"
 
 	"fmt"
@@ -162,4 +164,29 @@ func IsCordAddress(address string) bool {
 	} else {
 		return false
 	}
+}
+
+func ConvertUnixTimeToDateTime(unixTime float64, timeZone string) string {
+	location, err := time.LoadLocation(timeZone)
+	if err != nil {
+		panic(err)
+	}
+
+	date := time.Unix(int64(unixTime), 0).In(location)
+
+	formattedDate := date.Format("2006-January-02 15:04:05 MST")
+
+	return formattedDate
+}
+
+func ConvertDateTimeToUnixTime(dateTimeStr string) int64 {
+	layout := "2006-January-02 15:04:05 MST"
+	date, err := time.Parse(layout, dateTimeStr)
+	if err != nil {
+		panic(err)
+	}
+
+	unixTime := date.Unix()
+
+	return unixTime
 }
