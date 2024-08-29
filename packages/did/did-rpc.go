@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 )
 
 func FromChain(encoded []byte) string {

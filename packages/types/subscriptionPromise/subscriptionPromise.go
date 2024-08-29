@@ -1,7 +1,7 @@
 package subscriptionPromise
 
 import (
-	"github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	"github.com/dhiway/cord.go/packages/types/extrinsic"
 )
 
 type Evaluator[T any] func(value T) bool

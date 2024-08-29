@@ -1,4 +1,4 @@
-module github.com/kartikaysaxena/cord.go
+module github.com/dhiway/cord.go
 
 go 1.22.3
 

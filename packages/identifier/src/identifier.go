@@ -6,8 +6,8 @@ import (
 	"log"
 	"strings"
 
-	statement "github.com/kartikaysaxena/cord.go/packages/types/statement"
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	statement "github.com/dhiway/cord.go/packages/types/statement"
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 )
 
 var VALID_IDENTS = []int{

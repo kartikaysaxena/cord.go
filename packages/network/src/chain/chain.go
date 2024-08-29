@@ -5,9 +5,9 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/rpc/author"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-	extrinsic "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	extrinsic "github.com/dhiway/cord.go/packages/types/extrinsic"
 
-	ConfigService "github.com/kartikaysaxena/cord.go/packages/config"
+	ConfigService "github.com/dhiway/cord.go/packages/config"
 )
 
 func SubmitSignedTx(Extrinsic types.Extrinsic, opts ConfigService.ConfigOpts) (*author.ExtrinsicStatusSubscription, error) {

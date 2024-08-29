@@ -1,4 +1,4 @@
-module github.com/kartikaysaxena/cord.go/demo
+module github.com/dhiway/cord.go/demo
 
 go 1.22.3
 
@@ -20,7 +20,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
-	github.com/kartikaysaxena/cord.go v1.5.0
+	github.com/dhiway/cord.go v1.5.0
 	github.com/kartikaysaxena/substrateinterface v0.5.0
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
@@ -31,4 +31,4 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
 
-replace github.com/kartikaysaxena/cord.go => ../
+replace github.com/dhiway/cord.go => ../
