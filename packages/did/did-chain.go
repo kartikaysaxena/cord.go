@@ -17,7 +17,7 @@ import (
 	ext "github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 	"github.com/vedhavyas/go-subkey/scale"
 
-	crypto_utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	crypto_utils "github.com/dhiway/cord.go/packages/utils/src"
 )
 
 type TxInput struct {
@@ -87,7 +87,7 @@ func PublicKeyToChain(key map[string]interface{}) map[string]string {
 	return map[string]string{cryptoType: "0x" + publicKey}
 }
 
-func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter string, signCallback func([]byte) map[string]string) (ext.DynamicExtrinsic, error) {
+func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter string, signCallback func([]byte) map[string]string) (ext.Extrinsic, error) {
 
 	authentication := input["authentication"].(DidVerificationKey)
 	assertionMethod := input["assertion_method"]
@@ -136,7 +136,7 @@ func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter
 		"signature": encodedSignature,
 	})
 
-	return ext.NewDynamicExtrinsic(&extrinsic), nil
+	return ext.NewExtrinsic(extrinsic), nil
 }
 
 const MAX_NONCE_VALUE = uint64(math.MaxUint64)
@@ -169,7 +169,7 @@ func getNextNonce(api *gsrpc.SubstrateAPI, address string) (uint64, error) {
 	return increaseNonce(uint64(accountInfo.Nonce), 1), nil
 }
 
-func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[string]interface{}) extrinsic.DynamicExtrinsic {
+func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[string]interface{}) extrinsic.Extrinsic {
 
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
@@ -210,7 +210,7 @@ func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[str
 		"submit_did_call": sig,
 	})
 
-	return extrinsic.NewDynamicExtrinsic(&call)
+	return extrinsic.NewExtrinsic(call)
 }
 
 // Creates a new DID using the provided mnemonic and service endpoints
@@ -258,7 +258,7 @@ func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount string, mnemonic string
 		return nil, err
 	}
 
-	extrinsic, err := api.RPC.Author.SubmitAndWatchDynamicExtrinsic(didCreationTx)
+	extrinsic, err := api.RPC.Author.SubmitAndWatchExtrinsic(didCreationTx)
 	if err != nil {
 		panic(err)
 	}
@@ -356,7 +356,7 @@ func findCallMethodIndex(call string, meta types.Metadata) uint8 {
 	return 0
 }
 
-func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Metadata) string {
+func getKeyRelationshipForMethod(call extrinsic.Extrinsic, meta types.Metadata) string {
 	utilityIndex := findCallSectionIndex("utility", meta)
 	batchIndex := findCallMethodIndex("batch", meta)
 	batchAllIndex := findCallMethodIndex("batchAll", meta)
@@ -367,7 +367,7 @@ func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Met
 			call.Method.CallIndex.MethodIndex == batchAllIndex ||
 			call.Method.CallIndex.MethodIndex == forceBatchIndex) {
 
-		var subCalls []extrinsic.DynamicExtrinsic
+		var subCalls []extrinsic.Extrinsic
 
 		decoder := scale.NewDecoder(bytes.NewReader(call.Method.Args))
 		err := decoder.Decode(&subCalls)
@@ -401,7 +401,7 @@ func getKeyRelationshipForMethod(call extrinsic.DynamicExtrinsic, meta types.Met
 	return ""
 }
 
-func AuthorizeTx(api *gsrpc.SubstrateAPI, creatorURI string, ext extrinsic.DynamicExtrinsic, signcallback func(), address string, signingOptions ...interface{}) (extrinsic.DynamicExtrinsic, error) {
+func AuthorizeTx(api *gsrpc.SubstrateAPI, creatorURI string, ext extrinsic.Extrinsic, signcallback func(), address string, signingOptions ...interface{}) (extrinsic.Extrinsic, error) {
 	if signingOptions == nil {
 		signingOptions = []interface{}{}
 	}

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 	"golang.org/x/crypto/blake2b"
 )
 
