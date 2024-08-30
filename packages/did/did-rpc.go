@@ -8,7 +8,9 @@ import (
 )
 
 func FromChain(encoded []byte) string {
+
 	address, err := utils.EncodeAddress(encoded, utils.Ss58Format)
+
 	if err != nil {
 		panic(err)
 	}
@@ -25,6 +27,7 @@ func DidPublicKeyDetailsFromChain(keyDetails map[string]interface{}) map[string]
 	if key["isPublicEncryptionKey"].(bool) {
 		keyValue = key["asPublicEncryptionKey"]
 	}
+
 
 	keyID := keyDetails["id"].([]byte)
 
@@ -50,6 +53,7 @@ func DocumentFromChain(encoded map[string]interface{}) map[string]interface{} {
 	keys := make(map[string]interface{})
 	for keyID, keyDetails := range publicKeys {
 		keys[ResourceIdToChain(keyID)] = DidPublicKeyDetailsFromChain(keyDetails.(map[string]interface{}))
+
 	}
 
 	authKeyID := hex.EncodeToString(authenticationKey)
@@ -92,6 +96,7 @@ func ServiceFromChain(encoded map[string]interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"id":              "#" + id,
 		"type":            serviceTypes,
+
 		"serviceEndpoint": urls,
 	}
 }
