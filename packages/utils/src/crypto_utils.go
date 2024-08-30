@@ -13,7 +13,6 @@ import (
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	"github.com/kartikaysaxena/substrateinterface/types"
 
-	// "github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/cosmos/go-bip39"
 	"github.com/mr-tron/base58/base58"
 	"golang.org/x/crypto/blake2b"
