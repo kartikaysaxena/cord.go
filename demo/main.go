@@ -92,9 +92,13 @@ func main() {
 	}
 
 	call2, err := types.NewCall(meta, "Sudo.sudo", call)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(call2)
 
-	ext := extrinsic.NewDynamicExtrinsic(&call2)
+	ext := extrinsic.NewExtrinsic(call2)
 
 	err = ext.Sign(
 		AliceKeyRingPair,
@@ -115,21 +119,11 @@ func main() {
 
 	fmt.Printf("Ext - %s\n", encodedExt)
 
-	sub, err := api.RPC.Author.SubmitAndWatchDynamicExtrinsic(ext)
+	sub, err := api.RPC.Author.SubmitExtrinsic(ext)
 
 	if err != nil {
 		panic(err)
 	}
 
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case st := <-sub.Chan():
-			extStatus, _ := st.MarshalJSON()
-			fmt.Printf("Status for transaction - %s\n", string(extStatus))
-		case err := <-sub.Err():
-			panic(err)
-		}
-	}
+	fmt.Println(sub)
 }
