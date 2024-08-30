@@ -8,6 +8,15 @@ require (
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/kartikaysaxena/substrateinterface v1.1.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.1.1 // indirect
+	github.com/stretchr/testify v1.7.2 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
 	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/cosmos/go-bip39 v1.0.0
