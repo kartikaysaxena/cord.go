@@ -1,7 +1,7 @@
 package errorhandler
 
 import (
-	"github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	"github.com/dhiway/cord.go/packages/types/extrinsic"
 )
 
 func ExtrinsicFailed(extrinsicResult extrinsic.ISubmittableResult) bool {

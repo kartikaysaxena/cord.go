@@ -1,13 +1,20 @@
-module github.com/kartikaysaxena/cord.go
+module github.com/dhiway/cord.go
 
 go 1.22.3
 
 require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
-	github.com/kartikaysaxena/substrateinterface v0.5.0
+	github.com/kartikaysaxena/substrateinterface v1.1.2
 )
 
-require github.com/vedhavyas/go-subkey/v2 v2.0.0 // indirect
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.1.1 // indirect
+	github.com/stretchr/testify v1.7.2 // indirect
+	github.com/vedhavyas/go-subkey/v2 v2.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
 
 require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect

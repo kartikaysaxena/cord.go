@@ -1,9 +1,9 @@
 package network_score
 
 import (
-	"github.com/kartikaysaxena/cord.go/packages/did"
-	identifier "github.com/kartikaysaxena/cord.go/packages/identifier/src"
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	"github.com/dhiway/cord.go/packages/did"
+	identifier "github.com/dhiway/cord.go/packages/identifier/src"
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	"github.com/kartikaysaxena/substrateinterface/types"
@@ -37,7 +37,7 @@ func isRatingStored(ratingURI string, api *gsrpc.SubstrateAPI) (bool, error) {
 	return true, nil
 }
 
-func dispatchRatingToChain(api *gsrpc.SubstrateAPI,ratingEntry map[string]string, authorAccount signature.KeyringPair, authorizationURI string, signCallback func()) (string, error) {
+func dispatchRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string]string, authorAccount signature.KeyringPair, authorizationURI string, signCallback func()) (string, error) {
 
 	authorizationID, err := identifier.UriToIdentifier(authorizationURI)
 	if err != nil {
@@ -91,7 +91,6 @@ func dispatchRatingToChain(api *gsrpc.SubstrateAPI,ratingEntry map[string]string
 	return ratingEntry["entry_uri"], nil
 }
 
-
 func dispatchRevokeRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string]interface{}, authorAccount signature.KeyringPair, authorizationURI string, signCallback func()) (string, error) {
 
 	authorizationID, err := identifier.UriToIdentifier(authorizationURI)
@@ -99,7 +98,7 @@ func dispatchRevokeRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string
 		panic(err)
 	}
 
-	exists, err := isRatingStored(ratingEntry["entry"].(map[string]string)["reference_id"],api)
+	exists, err := isRatingStored(ratingEntry["entry"].(map[string]string)["reference_id"], api)
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +143,6 @@ func dispatchRevokeRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string
 
 	return ratingEntry["entry_uri"].(string), nil
 }
-
 
 func dispatchReviseRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string]interface{}, authorAccount signature.KeyringPair, authorizationURI string, signCallback func()) (string, error) {
 
@@ -203,7 +201,6 @@ func dispatchReviseRatingToChain(api *gsrpc.SubstrateAPI, ratingEntry map[string
 	return ratingEntry["entry_uri"].(string), nil
 }
 
-
 func decodeRatingValue(encodedRating int64, mod int64) int64 {
 	if mod == 0 {
 		mod = 10
@@ -227,9 +224,9 @@ func decodeEntryDetailsFromChain(encoded types.Bytes, stmtURI, timeZone string) 
 	encodedEntry := encodedValue["entry"].(map[string]interface{})
 
 	decodedEntry := map[string]interface{}{
-		"entity_id":  encodedEntry["entity_id"],
-		"provider_id": 	encodedEntry["provider_id"],
-		"rating_type": encodedEntry["rating_type"],
+		"entity_id":    encodedEntry["entity_id"],
+		"provider_id":  encodedEntry["provider_id"],
+		"rating_type":  encodedEntry["rating_type"],
 		"count_of_txn": encodedEntry["count_of_txn"],
 		"total_rating": decodeRatingValue(encodedEntry["total_rating"].(int64), 10),
 	}
@@ -253,19 +250,18 @@ func decodeEntryDetailsFromChain(encoded types.Bytes, stmtURI, timeZone string) 
 		panic(err)
 	}
 
-
 	decodedDetails := map[string]interface{}{
-		"entry_uri":     entry_uri,
-		"entry":         decodedEntry,
-		"digest":        encodedEntry["digest"],
-		"message_id":    encodedEntry["message_id"],
-		"space":         spaceId,
-		"creator_uri":   did.FromChain(encodedEntry["creator_id"].([]byte)),
-		"entry_type":    encodedEntry["entry_type"],
-		"reference_id":  reference_id,
-		"created_at":    utils.ConvertUnixTimeToDateTime(float64(encodedEntry["created_at"].(int64))/1000.0, timeZone),
+		"entry_uri":    entry_uri,
+		"entry":        decodedEntry,
+		"digest":       encodedEntry["digest"],
+		"message_id":   encodedEntry["message_id"],
+		"space":        spaceId,
+		"creator_uri":  did.FromChain(encodedEntry["creator_id"].([]byte)),
+		"entry_type":   encodedEntry["entry_type"],
+		"reference_id": reference_id,
+		"created_at":   utils.ConvertUnixTimeToDateTime(float64(encodedEntry["created_at"].(int64))/1000.0, timeZone),
 	}
-	
+
 	return decodedDetails
 }
 
@@ -343,7 +339,7 @@ func fetchEntityAggregateScoreFromChain(api *gsrpc.SubstrateAPI, entity string, 
 		}
 
 		var entries map[string]types.Bytes
-		_,  err = api.RPC.State.GetStorageLatest(key, &entries)
+		_, err = api.RPC.State.GetStorageLatest(key, &entries)
 		if err != nil {
 			panic(err)
 		}

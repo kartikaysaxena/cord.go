@@ -1,8 +1,8 @@
 package chainspace
 
 import (
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 	"github.com/google/uuid"
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/types/codec"
 )

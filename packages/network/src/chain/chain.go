@@ -3,14 +3,14 @@ package network
 import (
 	"errors"
 
-	extrinsic "github.com/kartikaysaxena/cord.go/packages/types/extrinsic"
+	extrinsic "github.com/dhiway/cord.go/packages/types/extrinsic"
 	"github.com/kartikaysaxena/substrateinterface/rpc/author"
-	"github.com/kartikaysaxena/substrateinterface/types"
+	ext "github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 
-	ConfigService "github.com/kartikaysaxena/cord.go/packages/config"
+	ConfigService "github.com/dhiway/cord.go/packages/config"
 )
 
-func SubmitSignedTx(Extrinsic types.Extrinsic, opts ConfigService.ConfigOpts) (*author.ExtrinsicStatusSubscription, error) {
+func SubmitSignedTx(Extrinsic ext.Extrinsic, opts ConfigService.ConfigOpts) (*author.ExtrinsicStatusSubscription, error) {
 
 	api, err := ConfigService.Get("api")
 	if err != nil {

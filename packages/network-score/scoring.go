@@ -4,9 +4,9 @@ import (
 	"errors"
 	"regexp"
 
-	"github.com/kartikaysaxena/cord.go/packages/did"
-	identifier "github.com/kartikaysaxena/cord.go/packages/identifier/src"
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	"github.com/dhiway/cord.go/packages/did"
+	identifier "github.com/dhiway/cord.go/packages/identifier/src"
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/types"
 	"github.com/kartikaysaxena/substrateinterface/types/codec"
@@ -43,7 +43,7 @@ func GetUriForRatingEntry(api *gsrpc.SubstrateAPI, entryDigest []byte, entityID,
 	scaleEncodedEntityUID := types.NewBytes([]byte(entityID))
 
 	scaleEncodedMessageID := types.NewBytes([]byte(entryMsgID))
-	
+
 	chainSpaceIdentifier, err := identifier.UriToIdentifier(chainSpace)
 	if err != nil {
 		return "", err
@@ -67,7 +67,7 @@ func GetUriForRatingEntry(api *gsrpc.SubstrateAPI, entryDigest []byte, entityID,
 		)...,
 	)
 
-	digest := utils.Blake2AsHex(combinedEncoded,32)
+	digest := utils.Blake2AsHex(combinedEncoded, 32)
 	ratingURI := identifier.HashToURI(digest, utils.RATING_IDENT, utils.RATING_PREFIX)
 	if err != nil {
 		return "", err
@@ -191,7 +191,7 @@ func BuildFromReviseRatingProperties(api *gsrpc.SubstrateAPI, rating map[string]
 		return nil, err
 	}
 
-	didUri, err := 	did.GetDidUri(rating["entry"].(map[string]interface{})["provider_did"].(string))
+	didUri, err := did.GetDidUri(rating["entry"].(map[string]interface{})["provider_did"].(string))
 	if err != nil {
 		panic(err)
 	}

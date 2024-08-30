@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 
-	subscriptionPromise "github.com/kartikaysaxena/cord.go/packages/types/subscriptionPromise"
+	subscriptionPromise "github.com/dhiway/cord.go/packages/types/subscriptionPromise"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 )
 

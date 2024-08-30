@@ -1,9 +1,9 @@
 package statement
 
 import (
-	"github.com/kartikaysaxena/cord.go/packages/did"
-	identifier "github.com/kartikaysaxena/cord.go/packages/identifier/src"
-	utils "github.com/kartikaysaxena/cord.go/packages/utils/src"
+	"github.com/dhiway/cord.go/packages/did"
+	identifier "github.com/dhiway/cord.go/packages/identifier/src"
+	utils "github.com/dhiway/cord.go/packages/utils/src"
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	"github.com/kartikaysaxena/substrateinterface/types"

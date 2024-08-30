@@ -4,12 +4,6 @@ import (
 	types "github.com/kartikaysaxena/substrateinterface/types"
 )
 
-func NewExtrinsic(c types.Call) types.Extrinsic {
-	return types.Extrinsic{
-		Version: types.ExtrinsicVersion4,
-		Method:  c,
-	}
-}
 
 type Event struct {
 	Section string
