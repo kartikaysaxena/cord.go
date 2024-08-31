@@ -1,7 +1,7 @@
 package address
 
 import (
-	"github.com/kartikaysaxena/substrateinterface/signature
+	"github.com/kartikaysaxena/substrateinterface/signature"
 )
 
 type CordEncryptionKeypair struct {
