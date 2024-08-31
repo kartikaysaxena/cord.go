@@ -17,7 +17,15 @@ func FromChain(encoded []byte) string {
 	return string(didUri)
 }
 
-func DidPublicKeyDetailsFromChain(keyDetails signature.KeyringPair) map[string]interface{} {
+func DidPublicKeyDetailsFromChain(keyDetails map[string]interface{}) map[string]interface{} {
+	key := keyDetails["key"].(map[string]interface{})
+	keyValue := key["asPublicVerificationKey"]
+	if key["isPublicEncryptionKey"].(bool) {
+		keyValue = key["asPublicEncryptionKey"]
+	}
+
+	keyID := keyDetails["id"].([]byte)
+
 	return map[string]interface{}{
 		"sr25519": "0x" + hex.EncodeToString(keyDetails.PublicKey),
 	}
@@ -37,7 +45,7 @@ func DocumentFromChain(encoded map[string]interface{}) map[string]interface{} {
 
 	keys := make(map[string]interface{})
 	for keyID, keyDetails := range publicKeys {
-		keys[ResourceIdToChain(keyID)] = DidPublicKeyDetailsFromChain(keyDetails.(signature.KeyringPair))
+		keys[ResourceIdToChain(keyID)] = DidPublicKeyDetailsFromChain(keyDetails.(map[string]interface{}))
 	}
 
 	authKeyID := hex.EncodeToString(authenticationKey)
@@ -80,6 +88,7 @@ func ServiceFromChain(encoded map[string]interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"id":              "#" + id,
 		"type":            serviceTypes,
+
 		"serviceEndpoint": urls,
 	}
 }
