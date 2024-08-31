@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
+	"github.com/kartikaysaxena/substrateinterface/signature"
 	"github.com/kartikaysaxena/substrateinterface/types"
 	"github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/kartikaysaxena/substrateinterface/types/extrinsic"
@@ -24,11 +25,37 @@ type TxInput struct {
 	Key DidVerificationKey
 }
 
-var cryptoTypeMap = map[int]string{
-	0: "Ed25519",
-	1: "Sr25519",
-	2: "Ecdsa",
+type ApiInput struct {
+
+	Did crypto_utils.CordAddress `scale:"-"`
+	Submitter signature.KeyringPair `scale:"-"`
+	AssertionKey map[string]interface{} `scale:"-"`
+	NewDelegationKey map[string]interface{} `scale:"-"`
+	NewAgreementKey map[string]string `scale:"-"`
+	NewServiceDetails []map[string]interface{} `scale:"-"`
+
 }
+
+type DidCall struct {
+	Details ApiInput
+	EncodedSignature EncodedSignature
+}
+
+type AgreementKey struct {
+	URI map[string]string
+	Address map[string]string
+	PublicKey map[string]string
+}
+
+type EncodedSignature struct {
+	Type string
+	PublicKey string
+}
+
+type AgreementKeyBase struct {
+	s *signature.KeyringPair
+}
+
 
 func ToChain(didUri DidUri) string {
 	parsed, err := Parse(string(didUri))
@@ -58,16 +85,16 @@ func ValidateService(endpoint map[string]interface{}) error {
 	serviceEndpoint := endpoint["service_endpoint"].([]string)
 
 	if strings.HasPrefix(id, "did:cord") {
-		return errors.New("The service ID should not contain the full DID URI, only the fragment after the '#'")
+		return errors.New("the service ID should not contain the full DID URI, only the fragment after the '#'")
 	}
 
 	if !IsUriFragment(ResourceIDToChain(id)) {
-		return errors.New("The service ID is not a valid URI fragment")
+		return errors.New("the service ID is not a valid URI fragment")
 	}
 
 	for _, uri := range serviceEndpoint {
 		if !IsUri(uri) {
-			return errors.New("The service URI is not valid according to RFC#3986")
+			return errors.New("the service uri is not valid according to RFC#3986")
 		}
 	}
 	return nil
@@ -81,43 +108,40 @@ func ServiceToChain(service map[string]interface{}) map[string]interface{} {
 	}
 }
 
-func PublicKeyToChain(key map[string]interface{}) map[string]string {
-	cryptoType := cryptoTypeMap[key["crypto_type"].(int)]
-	publicKey := hex.EncodeToString(key["public_key"].([]byte))
-	return map[string]string{cryptoType: "0x" + publicKey}
+
+func PublicKeyToChain(key *signature.KeyringPair) map[string]string {
+	publicKey := hex.EncodeToString(key.PublicKey)
+	return map[string]string{"sr25519": "0x" + publicKey}
 }
 
-func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter string, signCallback func([]byte) map[string]string) (ext.Extrinsic, error) {
+func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter signature.KeyringPair, signCallback func([]byte) map[string]string) (ext.Extrinsic, error) {
 
-	authentication := input["authentication"].(DidVerificationKey)
+	authentication := input["authentication"]
+	fmt.Println("hmm")
 	assertionMethod := input["assertion_method"]
 	capabilityDelegation := input["capability_delegation"]
-	keyAgreement := input["key_agreement"].([]map[string]interface{})
+	keyAgreement := input["key_agreement"].(*signature.KeyringPair)
+	fmt.Println(keyAgreement)
+
 	service := input["service"].([]map[string]interface{})
 
-	did, err := GetAddressByKey(authentication)
-	if err != nil {
-		panic(err)
-	}
+	did := GetAddressByKey(*authentication.(*signature.KeyringPair))
 
-	newAssertionKey := DidPublicKeyDetailsFromChain(assertionMethod.(map[string]interface{}))
-	newDelegationKey := DidPublicKeyDetailsFromChain(capabilityDelegation.(map[string]interface{}))
-	newKeyAgreementKeys := make([]map[string]string, len(keyAgreement))
-	for i, key := range keyAgreement {
-		newKeyAgreementKeys[i] = PublicKeyToChain(key)
-	}
+	newAssertionKey := DidPublicKeyDetailsFromChain(*assertionMethod.(*signature.KeyringPair))
+	newDelegationKey := DidPublicKeyDetailsFromChain(*capabilityDelegation.(*signature.KeyringPair))
+	newKeyAgreementKeys := PublicKeyToChain(keyAgreement)
+
 	newServiceDetails := make([]map[string]interface{}, len(service))
 	for i, svc := range service {
 		newServiceDetails[i] = ServiceToChain(svc)
 	}
-
-	apiInput := map[string]interface{}{
-		"did":                    did,
-		"submitter":              submitter,
-		"new_assertion_key":      newAssertionKey,
-		"new_delegation_key":     newDelegationKey,
-		"new_key_agreement_keys": newKeyAgreementKeys,
-		"new_service_details":    newServiceDetails,
+	apiInput := ApiInput{
+		Did: did,
+		Submitter: submitter,
+		AssertionKey: newAssertionKey,
+		NewDelegationKey: newDelegationKey,
+		NewAgreementKey: newKeyAgreementKeys,
+		NewServiceDetails: newServiceDetails,
 	}
 
 	byteEncoded, err := codec.Encode(apiInput)
@@ -126,15 +150,22 @@ func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter
 	}
 
 	signature := signCallback(byteEncoded)
-	encodedSignature := map[string]string{signature["key_type"]: "0x" + signature["signature"]}
+	encodedSignature := EncodedSignature{
+		Type: "sr25519",
+		PublicKey: "0x" + signature["signature"],
+	}
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
 		panic(err)
 	}
-	extrinsic, err := types.NewCall(meta, "Did", "create", map[string]interface{}{
-		"details":   apiInput,
-		"signature": encodedSignature,
+
+	extrinsic, err := types.NewCall(meta, "Did.create", DidCall{
+		Details: apiInput,
+		EncodedSignature: encodedSignature,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	return ext.NewExtrinsic(extrinsic), nil
 }
@@ -162,6 +193,9 @@ func getNextNonce(api *gsrpc.SubstrateAPI, address string) (uint64, error) {
 
 	var accountInfo types.AccountInfo
 	_, err = api.RPC.State.GetStorageLatest(storageKey, &accountInfo)
+	if err != nil {
+		return 0, err
+	}
 
 	var storageKeys []types.StorageKey
 	storageKeys = append(storageKeys, storageKey)
@@ -209,12 +243,15 @@ func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[str
 		"did_call":        input,
 		"submit_did_call": sig,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	return extrinsic.NewExtrinsic(call)
 }
 
 // Creates a new DID using the provided mnemonic and service endpoints
-func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount string, mnemonic string, didServiceEndpoint []map[string]interface{}) (map[string]interface{}, error) {
+func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, mnemonic string, didServiceEndpoint []map[string]interface{}) (map[string]interface{}, error) {
 
 	// Generate mnemonic if not provided
 	theMnemonic := mnemonic
@@ -265,19 +302,19 @@ func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount string, mnemonic string
 
 	defer extrinsic.Unsubscribe()
 
-	key := DidVerificationKey{
-		PublicKey: authentication.PublicKey,
-		Type:      "sr25519",
+
+	didUri, err := GetDidUriFromKey(*authentication)
+	if err != nil {
+		panic(err)
 	}
 
-	didUri, err := GetDidUriFromKey(key)
 	err = api.Client.Call("DidApi.query", ToChain(didUri))
 	if err != nil {
 		panic(err)
 	}
 	document := LinkedInfoFromChain(didServiceEndpoint[0])
 	if document == nil {
-		return nil, errors.New("DID was not successfully created.")
+		return nil, errors.New("DID was not successfully created")
 	}
 
 	return map[string]interface{}{
@@ -294,7 +331,7 @@ func callIndex(meta *types.Metadata, call string) types.CallIndex {
 	return c
 }
 
-func methodMappingFunc(meta *types.Metadata) map[types.CallIndex]string {
+func MethodMappingFunc(meta *types.Metadata) map[types.CallIndex]string {
 	methodMappingCallIndex := map[types.CallIndex]string{
 		callIndex(meta, "Statement"):                                  "authentication",
 		callIndex(meta, "Schema"):                                     "authentication",
@@ -402,9 +439,6 @@ func getKeyRelationshipForMethod(call extrinsic.Extrinsic, meta types.Metadata) 
 }
 
 func AuthorizeTx(api *gsrpc.SubstrateAPI, creatorURI string, ext extrinsic.Extrinsic, signcallback func(), address string, signingOptions ...interface{}) (extrinsic.Extrinsic, error) {
-	if signingOptions == nil {
-		signingOptions = []interface{}{}
-	}
 
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {

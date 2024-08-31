@@ -4,14 +4,12 @@ import (
 	"encoding/hex"
 	"strings"
 
+	"github.com/kartikaysaxena/substrateinterface/signature"
 	utils "github.com/dhiway/cord.go/packages/utils/src"
 )
 
 func FromChain(encoded []byte) string {
-	address, err := utils.EncodeAddress(encoded, utils.Ss58Format)
-	if err != nil {
-		panic(err)
-	}
+	address := utils.EncodeAddress(encoded, utils.Ss58Format)
 	didUri, err := GetDidUri(string(address))
 	if err != nil {
 		panic(err)
@@ -19,19 +17,9 @@ func FromChain(encoded []byte) string {
 	return string(didUri)
 }
 
-func DidPublicKeyDetailsFromChain(keyDetails map[string]interface{}) map[string]interface{} {
-	key := keyDetails["key"].(map[string]interface{})
-	keyValue := key["asPublicVerificationKey"]
-	if key["isPublicEncryptionKey"].(bool) {
-		keyValue = key["asPublicEncryptionKey"]
-	}
-
-	keyID := keyDetails["id"].([]byte)
-
+func DidPublicKeyDetailsFromChain(keyDetails signature.KeyringPair) map[string]interface{} {
 	return map[string]interface{}{
-		"id":        "#" + hex.EncodeToString(keyID),
-		"type":      strings.ToLower(keyValue.(map[string]interface{})["type"].(string)),
-		"publicKey": keyValue.(map[string]interface{})["value"],
+		"sr25519": "0x" + hex.EncodeToString(keyDetails.PublicKey),
 	}
 }
 
@@ -49,7 +37,7 @@ func DocumentFromChain(encoded map[string]interface{}) map[string]interface{} {
 
 	keys := make(map[string]interface{})
 	for keyID, keyDetails := range publicKeys {
-		keys[ResourceIdToChain(keyID)] = DidPublicKeyDetailsFromChain(keyDetails.(map[string]interface{}))
+		keys[ResourceIdToChain(keyID)] = DidPublicKeyDetailsFromChain(keyDetails.(signature.KeyringPair))
 	}
 
 	authKeyID := hex.EncodeToString(authenticationKey)
