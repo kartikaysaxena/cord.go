@@ -9,7 +9,7 @@ import (
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	types "github.com/kartikaysaxena/substrateinterface/types"
-	"github.com/kartikaysaxena/substrateinterface/types/codec"
+	// "github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 )
 
@@ -93,6 +93,9 @@ func main() {
 	}
 
 	call2, err := types.NewCall(meta, "Sudo.sudo", call)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(call2)
 
 	ext := extrinsic.NewExtrinsic(call2)
@@ -112,9 +115,6 @@ func main() {
 		panic(err)
 	}
 
-	encodedExt, err := codec.EncodeToHex(ext)
-
-	fmt.Printf("Ext - %s\n", encodedExt)
 
 	sub, err := api.RPC.Author.SubmitExtrinsic(ext)
 
@@ -124,7 +124,38 @@ func main() {
 
 	fmt.Println("Extrinsic Hash:", sub)
 
-	fmt.Println(meta.Version)
+	// ADD REGISTRAR
+	// registarCall, err := types.NewCall(meta, "Identity.add_registrar", types.AccountID(account.PublicKey))
+	// if err!= nil {
+	// 	panic(err)
+	// }
+	// sudoTx, err := types.NewCall(meta, "Sudo.sudo", registarCall)
+	// if err!= nil {
+	// 	panic(err)
+	// }
+	// registraExt := extrinsic.NewExtrinsic(sudoTx)
+	// err = registraExt.Sign(
+	// 	AliceKeyRingPair,
+	// 	meta,
+	// 	extrinsic.WithEra(types.ExtrinsicEra{IsImmortalEra: true}, genesisHash),
+	// 	extrinsic.WithNonce(types.NewUCompactFromUInt(uint64(accountInfo.Nonce))),
+	// 	extrinsic.WithTip(types.NewUCompactFromUInt(0)),
+	// 	extrinsic.WithSpecVersion(rv.SpecVersion),
+	// 	extrinsic.WithTransactionVersion(rv.TransactionVersion),
+	// 	extrinsic.WithGenesisHash(genesisHash),
+	// )
+	// if err!= nil {
+	// 	panic(err)
+	// }
+	// registrarExtrinsic, err := api.RPC.Author.SubmitExtrinsic(registraExt)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(registrarExtrinsic)
+	
+
+
+
 
 	did, err := did.CreateDid(api, AliceKeyRingPair, "", nil)
 	if err != nil {
