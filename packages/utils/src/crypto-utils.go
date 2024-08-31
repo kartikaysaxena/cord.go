@@ -4,23 +4,20 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
+	"io"
 	"log"
 
 	"strconv"
 
+	"github.com/cosmos/go-bip39"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	"github.com/kartikaysaxena/substrateinterface/types"
-
-	"github.com/cosmos/go-bip39"
 	"github.com/mr-tron/base58/base58"
 	"golang.org/x/crypto/blake2b"
+	"golang.org/x/crypto/nacl/box"
 )
 
-type SignatureOpts struct {
-	types.SignatureOptions
-}
 
 func CheckAddress(address string, expectedPrefix byte) bool {
 	decoded, err := base58.Decode(address)
@@ -63,13 +60,51 @@ func U8aToHex(value []byte, bitLength int, isPrefixed bool) string {
 	return fmt.Sprintf("%s%s", prefix, hex.EncodeToString(value))
 }
 
+func MakeEncryptionKeypairFromSeed(seed []byte) (map[string]interface{}, error) {
+    var publicKey, privateKey *[32]byte
+    var err error
+
+    if seed == nil {
+        // Generate a random seed
+        seed = make([]byte, 32)
+        if _, err = io.ReadFull(rand.Reader, seed); err != nil {
+            return nil, err
+        }
+        publicKey, privateKey, err = box.GenerateKey(rand.Reader)
+        if err != nil {
+            return nil, err
+        }
+    } else {
+        // Use the provided seed to create a key pair
+        var privateKeyArray [32]byte
+        copy(privateKeyArray[:], seed)
+        privateKey = &privateKeyArray
+        publicKey, _, err = box.GenerateKey(rand.Reader)
+		if err != nil {
+			panic(err)
+		}
+    }
+
+    keypair := map[string]interface{}{
+        "publicKey":  publicKey[:],
+        "privateKey": privateKey[:],
+        "cryptoType": "X25519",
+    }
+
+    return keypair, nil
+}
+
 func Blake2AsHex(data []byte, digestSize int) string {
 	hash := blake2b.Sum256(data)
 	return hex.EncodeToString(hash[:digestSize])
 }
 
-func KeyPairFromURI(uri string) (signature.KeyringPair, error) {
-	return signature.KeyringPairFromSecret(uri,Ss58Format)
+func KeyPairFromURI(uri string) (*signature.KeyringPair, error) {
+	keypair, err := signature.KeyringPairFromSecret(uri, Ss58Format)
+	if err != nil {
+		panic(err)
+	}
+	return &keypair, nil
 }
 
 func Blake2AsU8a(data []byte, bitLength int, key []byte) ([]byte, error) {
@@ -153,8 +188,8 @@ func SignatureVerify(message []byte, sig []byte, publicKey []byte) bool {
 	return flag
 }
 
-func EncodeAddress(publicKey []byte, ss58Format int) (CordAddress, error) {
-	return CordAddress(Base58Encode(publicKey)), errors.New("Cannot encode address")
+func EncodeAddress(publicKey []byte, ss58Format int) CordAddress {
+	return CordAddress(Base58Encode(publicKey))
 }
 
 func DecodeAddress(address string) ([]byte, error) {
