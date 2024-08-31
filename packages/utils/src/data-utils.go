@@ -125,7 +125,7 @@ func ValidateUri(input interface{}, expectType ...string) error {
 
 func GetAddressByKey(input DidVerificationKey) (CordAddress, error) {
 	if input.Type == "ed25519" || input.Type == "sr25519" {
-		return EncodeAddress(input.PublicKey, Ss58Format)
+		return EncodeAddress(input.PublicKey, Ss58Format), nil
 	}
 
 	var address []byte
@@ -135,7 +135,7 @@ func GetAddressByKey(input DidVerificationKey) (CordAddress, error) {
 	} else {
 		address = input.PublicKey
 	}
-	return EncodeAddress(address, Ss58Format)
+	return EncodeAddress(address, Ss58Format), nil
 }
 
 func GetDidUri(didOrAddress string) (DidUri, error) {

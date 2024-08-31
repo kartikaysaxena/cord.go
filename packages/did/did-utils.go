@@ -108,7 +108,7 @@ func ValidateUri(input interface{}, expectType ...string) error {
 	}
 }
 
-func GetAddressByKey(key signature.KeyringPair) (utils.CordAddress, error) {
+func GetAddressByKey(key signature.KeyringPair) utils.CordAddress {
 	return utils.EncodeAddress(key.PublicKey, utils.Ss58Format)
 }
 
@@ -124,9 +124,6 @@ func GetDidUri(didOrAddress string) (DidUri, error) {
 }
 
 func GetDidUriFromKey(key signature.KeyringPair) (DidUri, error) {
-	address, err := GetAddressByKey(key)
-	if err != nil {
-		return "", err
-	}
+	address := GetAddressByKey(key)
 	return GetDidUri(string(address))
 }

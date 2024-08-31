@@ -124,6 +124,8 @@ func main() {
 
 	fmt.Println("Extrinsic Hash:", sub)
 
+	fmt.Println(meta.Version)
+
 	did, err := did.CreateDid(api, AliceKeyRingPair, "", nil)
 	if err != nil {
 		panic(err)
