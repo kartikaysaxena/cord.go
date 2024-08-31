@@ -126,6 +126,7 @@ func ValidateUri(input interface{}, expectType ...string) error {
 func GetAddressByKey(input DidVerificationKey) (CordAddress, error) {
 	if input.Type == "ed25519" || input.Type == "sr25519" {
 		return EncodeAddress(input.PublicKey, Ss58Format), nil
+
 	}
 
 	var address []byte
@@ -165,6 +166,7 @@ func IsCordAddress(address string) bool {
 		return false
 	}
 }
+
 
 func ConvertUnixTimeToDateTime(unixTime float64, timeZone string) string {
 	location, err := time.LoadLocation(timeZone)

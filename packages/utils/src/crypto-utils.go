@@ -60,6 +60,7 @@ func U8aToHex(value []byte, bitLength int, isPrefixed bool) string {
 	return fmt.Sprintf("%s%s", prefix, hex.EncodeToString(value))
 }
 
+
 func MakeEncryptionKeypairFromSeed(seed []byte) (map[string]interface{}, error) {
     var publicKey, privateKey *[32]byte
     var err error
@@ -188,6 +189,7 @@ func SignatureVerify(message []byte, sig []byte, publicKey []byte) bool {
 	return flag
 }
 
+
 func EncodeAddress(publicKey []byte, ss58Format int) CordAddress {
 	return CordAddress(Base58Encode(publicKey))
 }
@@ -252,6 +254,7 @@ func U8aToU8a(data interface{}) ([]byte, error) {
 func CreateFromMnemonic(mnemonic string) (signature.KeyringPair, error) {
 	return signature.KeyringPairFromSecret(mnemonic, 29)
 }
+
 
 func CreateAccount() (signature.KeyringPair, error) {
 	entropy, _ := bip39.NewEntropy(256)
