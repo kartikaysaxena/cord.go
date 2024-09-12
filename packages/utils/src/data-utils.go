@@ -81,12 +81,14 @@ func IsSameSubject(didA, didB DidUri) (bool, error) {
 
 type EncodedVerificationKey struct {
 	Sr25519 []byte
-	Ed25519 []byte
-	Ecdsa   []byte
 }
 
 type EncodedEncryptionKey struct {
-	X25519 []byte
+	X25519 [32]byte
+}
+
+type DidServiceEndPoint struct{
+	
 }
 
 type EncodedKey struct {

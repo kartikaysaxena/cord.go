@@ -8,7 +8,24 @@ type DidKeypair struct {
 	Authentication *signature.KeyringPair
 	Assertion      *signature.KeyringPair
 	Delegation     *signature.KeyringPair
-	KeyAgreement   *signature.KeyringPair
+	KeyAgreement   KeyAgreement
+}
+
+type KeyAgreement struct {
+	PublicKey  [32]byte
+	SecretKey [32]byte
+	Type 	 string
+}
+
+func GenerateKeyAgreement(uri string) KeyAgreement{
+	pub, secret := NaclBoxPairFromSecret(uri)
+
+	return KeyAgreement{
+		PublicKey:  pub,
+		SecretKey: secret,
+		Type: "x25519",
+	}
+
 }
 
 func GenerateKeypairs(uri string) (DidKeypair, error) {
@@ -31,11 +48,7 @@ func GenerateKeypairs(uri string) (DidKeypair, error) {
 		panic(err)
 	}
 
-	keyAgreement, err := KeyPairFromURI(uri + "//did//keyAgreement//0")
-	if err != nil {
-		panic(err)
-	}
-
+	keyAgreement := GenerateKeyAgreement(uri + "//did//keyAgreement//0")
 	return DidKeypair{
 		Authentication: authentication,
 		Assertion:      assertion,

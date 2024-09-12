@@ -50,7 +50,7 @@ var defaults = map[string][]int{
 var IDFR_PREFIX = utils.StringToU8a("CRDIDFR")
 
 func PpHash(key []byte) []byte {
-	pphash, _ := utils.Blake2AsU8a(utils.U8aConcat(IDFR_PREFIX, key), 512, key)
+	pphash, _ := utils.Blake2AsU8a(utils.U8aConcat(IDFR_PREFIX, key), 32)
 	return pphash
 }
 

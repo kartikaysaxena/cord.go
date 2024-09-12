@@ -2,7 +2,7 @@ package did
 
 import (
 	"bytes"
-	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -27,17 +27,17 @@ type TxInput struct {
 
 type ApiInput struct {
 
-	Did crypto_utils.CordAddress `scale:"-"`
-	Submitter signature.KeyringPair `scale:"-"`
-	AssertionKey map[string]interface{} `scale:"-"`
-	NewDelegationKey map[string]interface{} `scale:"-"`
-	NewAgreementKey map[string]string `scale:"-"`
-	NewServiceDetails []map[string]interface{} `scale:"-"`
+	Did crypto_utils.CordAddress
+	Submitter crypto_utils.CordAddress
+	AssertionKey crypto_utils.EncodedVerificationKey
+	NewDelegationKey crypto_utils.EncodedVerificationKey
+	NewAgreementKey crypto_utils.EncodedEncryptionKey
+	NewServiceDetails []ChainEndpoint
 
 }
 
 type DidCall struct {
-	Details ApiInput
+	Details []uint8
 	EncodedSignature EncodedSignature
 }
 
@@ -47,13 +47,35 @@ type AgreementKey struct {
 	PublicKey map[string]string
 }
 
+type ChainEndpoint struct{
+	Id string
+	ServiceTypes []string
+	Urls []string
+}
+
 type EncodedSignature struct {
-	Type string
-	PublicKey string
+	Sr25519 []uint8   `json:"sr25519"`
+}
+
+// didServiceEndpoint = []DidServiceEndpoint{
+// 	Id:               "#my-service",
+// 	Type:             []string{"service-type"},
+// 	ServiceEndpoint: []string{"https://www.example.com"},
+// }
+
+type DidServiceEndpoint struct {
+	Id               string
+	Type             []string
+	ServiceEndpoint  []string
 }
 
 type AgreementKeyBase struct {
 	s *signature.KeyringPair
+}
+
+type EncodedSig struct {
+	Data ApiInput
+	KeyRelationship string
 }
 
 
@@ -100,74 +122,156 @@ func ValidateService(endpoint map[string]interface{}) error {
 	return nil
 }
 
-func ServiceToChain(service map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"id":           ResourceIDToChain(service["id"].(string)),
-		"serviceTypes": service["type"].([]string),
-		"urls":         service["service_endpoint"].([]string),
+type PalletDidServiceEndpointsDidEndpoint struct {
+	Id               string
+	ServiceTypes 	[]string
+	Urls            []string
+}
+
+
+func ServiceToChain(service DidServiceEndpoint) ChainEndpoint {
+	return ChainEndpoint{
+		Id: service.Id,
+		ServiceTypes: service.Type,
+		Urls: service.ServiceEndpoint,
 	}
 }
 
 
-func PublicKeyToChain(key *signature.KeyringPair) map[string]string {
-	publicKey := hex.EncodeToString(key.PublicKey)
-	return map[string]string{"sr25519": "0x" + publicKey}
+func PublicKeyToChain(key crypto_utils.KeyAgreement) crypto_utils.EncodedEncryptionKey {
+	return crypto_utils.EncodedEncryptionKey{
+		X25519: key.PublicKey,
+	}
 }
 
-func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter signature.KeyringPair, signCallback func([]byte) map[string]string) (ext.Extrinsic, error) {
+func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter signature.KeyringPair, signCallback func([]byte) map[string]interface{}) (ext.Extrinsic, error) {
 
 	authentication := input["authentication"]
 	fmt.Println("hmm")
 	assertionMethod := input["assertion_method"]
 	capabilityDelegation := input["capability_delegation"]
-	keyAgreement := input["key_agreement"].(*signature.KeyringPair)
-	fmt.Println(keyAgreement)
+	keyAgreement := input["key_agreement"].(crypto_utils.KeyAgreement)
+	fmt.Println(keyAgreement, "debug level keyAgreement")
 
-	service := input["service"].([]map[string]interface{})
+	service := input["service"].([]DidServiceEndpoint)
 
 	did := GetAddressByKey(*authentication.(*signature.KeyringPair))
-
+	sub := GetAddressByKey(submitter)
+	fmt.Println(authentication, "debug level authenticationKey")
+	fmt.Println(did, "debug level did")
+	fmt.Println(sub, "debug level submitter")
 	newAssertionKey := DidPublicKeyDetailsFromChain(*assertionMethod.(*signature.KeyringPair))
 	newDelegationKey := DidPublicKeyDetailsFromChain(*capabilityDelegation.(*signature.KeyringPair))
 	newKeyAgreementKeys := PublicKeyToChain(keyAgreement)
 
-	newServiceDetails := make([]map[string]interface{}, len(service))
+	newServiceDetails := make([]ChainEndpoint, len(service))
 	for i, svc := range service {
 		newServiceDetails[i] = ServiceToChain(svc)
 	}
 	apiInput := ApiInput{
 		Did: did,
-		Submitter: submitter,
+		Submitter: sub,
 		AssertionKey: newAssertionKey,
 		NewDelegationKey: newDelegationKey,
 		NewAgreementKey: newKeyAgreementKeys,
 		NewServiceDetails: newServiceDetails,
 	}
+	fmt.Println(did, "debug level did")
+	fmt.Println(sub, "debug level submitter")
+	fmt.Println(newAssertionKey, "debug level AssertionKey")
+	fmt.Println(newDelegationKey, "debug level DelegationKey")
+	fmt.Println(newKeyAgreementKeys, "debug level KeyAgreementKeys")
+	fmt.Println(newServiceDetails, "debug level ServiceDetails")
+	fmt.Println(apiInput, "debug level apiInput")
 
-	byteEncoded, err := codec.Encode(apiInput)
+	// time.Sleep(30 * time.Second)
+	fmt.Println("timeout")
+
+	byteEncoded, err := codec.Encode(EncodedSig{
+		Data: apiInput,
+		KeyRelationship: "authentication",
+	})
+	if err != nil {
+		panic(err)
+	}
+	encoded, err := codec.Encode(apiInput)
 	if err != nil {
 		panic(err)
 	}
 
-	signature := signCallback(byteEncoded)
-	encodedSignature := EncodedSignature{
-		Type: "sr25519",
-		PublicKey: "0x" + signature["signature"],
+	sig, err := signature.Sign(byteEncoded, authentication.(*signature.KeyringPair).URI)
+	if err != nil {
+		panic(err)
 	}
+
+	sign := signCallback(sig)
+
+	encodedSignature := EncodedSignature{}
+
+	if sig, ok := sign["signature"].([]uint8); ok {
+		encodedSignature.Sr25519 = sig
+	} else {
+		fmt.Println("Failed to assert type to []uint8")
+	}
+	fmt.Println(encodedSignature.Sr25519, "sr25519 here")
+
 	meta, err := api.RPC.State.GetMetadataLatest()
 	if err != nil {
 		panic(err)
 	}
 
-	extrinsic, err := types.NewCall(meta, "Did.create", DidCall{
-		Details: apiInput,
-		EncodedSignature: encodedSignature,
-	})
+	fmt.Println(encodedSignature, "debug level EncodedSignature") // 64 bytes fine
+
+	fmt.Println(encoded, encodedSignature, "debug level DidCall")
+
+	encodedJson, err := json.Marshal(encodedSignature)
 	if err != nil {
 		panic(err)
 	}
 
-	return ext.NewExtrinsic(extrinsic), nil
+	extrinsic, err := types.NewCall(meta, "Did.create", encoded, encodedJson)
+	if err != nil {
+		panic(err)
+	}
+
+	didExtrinsic := ext.NewExtrinsic(extrinsic)
+
+	accountStorageKey, err := types.CreateStorageKey(meta, "System", "Account", []byte(signature.TestKeyringPairAlice.PublicKey))
+	if err != nil {
+		panic(err)
+	}
+
+	var accountInfo types.AccountInfo
+	ok, err := api.RPC.State.GetStorageLatest(accountStorageKey, &accountInfo)
+	if err != nil || !ok {
+		panic(err)
+	}
+
+	genesisHash, err := api.RPC.Chain.GetBlockHash(0)
+	if err != nil {
+		panic(err)
+	}
+
+	rv, err := api.RPC.State.GetRuntimeVersionLatest()
+	if err != nil {
+		panic(err)
+	}
+
+	err = didExtrinsic.Sign(
+		submitter,
+		meta,
+		ext.WithEra(types.ExtrinsicEra{IsImmortalEra: true}, genesisHash),
+		ext.WithNonce(types.NewUCompactFromUInt(uint64(accountInfo.Nonce))),
+		ext.WithTip(types.NewUCompactFromUInt(0)),
+		ext.WithSpecVersion(rv.SpecVersion),
+		ext.WithTransactionVersion(rv.TransactionVersion),
+		ext.WithGenesisHash(genesisHash),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return didExtrinsic, nil
 }
 
 const MAX_NONCE_VALUE = uint64(math.MaxUint64)
@@ -251,7 +355,7 @@ func GenerateDidAuthenticatedTransaction(api *gsrpc.SubstrateAPI, params map[str
 }
 
 // Creates a new DID using the provided mnemonic and service endpoints
-func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, mnemonic string, didServiceEndpoint []map[string]interface{}) (map[string]interface{}, error) {
+func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, mnemonic string, didServiceEndpoint []DidServiceEndpoint) (map[string]interface{}, error) {
 
 	// Generate mnemonic if not provided
 	theMnemonic := mnemonic
@@ -269,11 +373,11 @@ func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, 
 	capabilityDelegation := keypairs.Delegation
 
 	if didServiceEndpoint == nil {
-		didServiceEndpoint = []map[string]interface{}{
+		didServiceEndpoint = []DidServiceEndpoint{
 			{
-				"id":               "#my-service",
-				"type":             []string{"service-type"},
-				"service_endpoint": []string{"https://www.example.com"},
+				Id:              "#my-service",
+				Type:            []string{"service-type"},
+				ServiceEndpoint: []string{"https://www.example.com"},
 			},
 		}
 	}
@@ -285,9 +389,9 @@ func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, 
 		"assertion_method":      assertionMethod,
 		"capability_delegation": capabilityDelegation,
 		"service":               didServiceEndpoint,
-	}, submitterAccount, func(data []byte) map[string]string {
-		return map[string]string{
-			"signature": "0x" + hex.EncodeToString(data),
+	}, submitterAccount, func(data []byte) map[string]interface{} {
+		return map[string]interface{}{
+			"signature": signCallbackSignature(data, *authentication),
 			"key_type":  "sr25519",
 		}
 	})
@@ -308,11 +412,13 @@ func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, 
 		panic(err)
 	}
 
-	err = api.Client.Call("DidApi.query", ToChain(didUri))
+	var result map[string]interface{}
+
+	err = api.Client.Call(result, "DidApi.query", ToChain(didUri))
 	if err != nil {
 		panic(err)
 	}
-	document := LinkedInfoFromChain(didServiceEndpoint[0])
+	document := LinkedInfoFromChain(result)
 	if document == nil {
 		return nil, errors.New("DID was not successfully created")
 	}
@@ -321,6 +427,14 @@ func CreateDid(api *gsrpc.SubstrateAPI, submitterAccount signature.KeyringPair, 
 		"mnemonic": theMnemonic,
 		"document": document["document"],
 	}, nil
+}
+
+func signCallbackSignature(data []byte, signer signature.KeyringPair) []byte {
+	sig, err := signature.Sign(data, signer.URI)
+	if err != nil {
+		panic(err)
+	}
+	return sig
 }
 
 func callIndex(meta *types.Metadata, call string) types.CallIndex {

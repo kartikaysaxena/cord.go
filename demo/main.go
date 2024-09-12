@@ -9,7 +9,6 @@ import (
 	gsrpc "github.com/kartikaysaxena/substrateinterface"
 	"github.com/kartikaysaxena/substrateinterface/signature"
 	types "github.com/kartikaysaxena/substrateinterface/types"
-	// "github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 )
 
@@ -73,7 +72,6 @@ func main() {
 	}
 
 	accountStorageKey, err := types.CreateStorageKey(meta, "System", "Account", AliceKeyRingPair.PublicKey)
-
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +83,7 @@ func main() {
 		panic(err)
 	}
 	account, _ := utils.CreateAccount()
-	fmt.Println("adress is here", account.Address, account.PublicKey, account.URI)
+	fmt.Println("address is here", account.Address, account.PublicKey, account.URI)
 
 	call, err := types.NewCall(meta, "NetworkMembership.nominate", types.AccountID(account.PublicKey), types.Bool(false))
 	if err != nil {
@@ -154,7 +152,8 @@ func main() {
 	// fmt.Println(registrarExtrinsic)
 	
 
-
+	// time.Sleep(30 * time.Second)
+	// fmt.Println("15 seconds have passed")
 
 
 	did, err := did.CreateDid(api, AliceKeyRingPair, "", nil)

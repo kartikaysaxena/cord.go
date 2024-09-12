@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"github.com/kartikaysaxena/substrateinterface/types"
 	"github.com/mr-tron/base58/base58"
 	"golang.org/x/crypto/blake2b"
+	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/nacl/box"
 )
 
@@ -107,52 +109,20 @@ func KeyPairFromURI(uri string) (*signature.KeyringPair, error) {
 	return &keypair, nil
 }
 
-func Blake2AsU8a(data []byte, bitLength int, key []byte) ([]byte, error) {
-	// Convert data to []byte
+func Blake2AsU8a(data []byte, digestSize int) ([]byte, error) {
+    hasher, err := blake2b.New(digestSize, nil)
+    if err != nil {
+        return nil, err
+    }
 
-	inputData := data
+    // Write data to the hasher
+    _, err = hasher.Write(data)
+    if err != nil {
+        return nil, err
+    }
 
-	var hashFunc func([]byte) ([]byte, error)
-	switch bitLength {
-	case 64:
-		hashFunc = func(data []byte) ([]byte, error) {
-			hash := blake2b.Sum512(data)
-			return hash[:8], nil
-		}
-	case 128:
-		hashFunc = func(data []byte) ([]byte, error) {
-			hash := blake2b.Sum512(data)
-			return hash[:16], nil
-		}
-	case 256:
-		hashFunc = func(data []byte) ([]byte, error) {
-			hash := blake2b.Sum256(data)
-			return hash[:], nil
-		}
-	case 384:
-		hashFunc = func(data []byte) ([]byte, error) {
-			hash, err := blake2b.New384(key)
-			if err != nil {
-				return nil, err
-			}
-			hash.Write(data)
-			return hash.Sum(nil), nil
-		}
-	case 512:
-		hashFunc = func(data []byte) ([]byte, error) {
-			hash, err := blake2b.New512(key)
-			if err != nil {
-				return nil, err
-			}
-			hash.Write(data)
-			return hash.Sum(nil), nil
-		}
-	default:
-		return nil, fmt.Errorf("unsupported bit length")
-	}
-
-	// Calculate the hash
-	return hashFunc(inputData)
+    // Compute and return the digest
+    return hasher.Sum(nil), nil
 }
 
 func u8aConcat(lists ...[]byte) []byte {
@@ -188,9 +158,65 @@ func SignatureVerify(message []byte, sig []byte, publicKey []byte) bool {
 	return flag
 }
 
-func EncodeAddress(publicKey []byte, ss58Format int) CordAddress {
-	return CordAddress(Base58Encode(publicKey))
+func decodeAddress(key string) ([]byte, error) {
+    return base58.Decode(key)
 }
+
+// sshash simulates a hashing function, here using SHA256 for demonstration
+func sshash(data []byte) []byte {
+    hash := sha256.Sum256(data)
+    return hash[:]
+}
+
+// u8aConcat concatenates multiple byte slices
+
+func EncodeAddress(key []byte, ss58Format int) CordAddress {
+
+
+    var input []byte
+    if ss58Format < 64 {
+        input = []byte{byte(ss58Format)}
+    } else {
+        input = []byte{
+            byte(((ss58Format & 252) >> 2) | 64),
+            byte((ss58Format >> 8) | ((ss58Format & 3) << 6)),
+        }
+    }
+
+    concatenated := u8aConcat(input, key)
+    hash := sshash(concatenated)
+
+    var checksum []byte
+    if len(key) == 32 || len(key) == 33 {
+        checksum = hash[:2]
+    } else {
+        checksum = hash[:1]
+    }
+
+    finalInput := u8aConcat(concatenated, checksum)
+    encoded := base58.Encode(finalInput)
+    return CordAddress(encoded)
+}
+
+// func naclBoxPairFromSecret(secret []byte) (*[32]byte, *[32]byte, error) {
+
+// 	// Hash the secret to ensure it's the correct length
+// 	hashedSecret := sha256.Sum256(secret)
+
+// 	// Generate the key pair from the hashed secret
+// 	var secretKey [32]byte
+// 	copy(secretKey[:], hashedSecret[:])
+
+// 	publicKey, _, err := box.GenerateKey(rand.Reader)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	return publicKey, &secretKey, nil
+// }
+
+// func makeEncryptionKeypairFromSecret(secret []byte) (map[string]interface{}, error) {
+// }
 
 func DecodeAddress(address string) ([]byte, error) {
 	return Base58Decode(address)
@@ -261,4 +287,18 @@ func CreateAccount() (signature.KeyringPair, error) {
 
 func InterfaceToBytes(data []byte, err error) []byte {
 	return types.NewBytes(data)
+}
+
+func blake2asU8a(input string) *[32]byte {
+    hash := blake2b.Sum256([]byte(input))
+    var output [32]byte
+    copy(output[:], hash[:32])
+    return &output
+}
+
+func NaclBoxPairFromSecret(secretKey string) ([32]byte, [32]byte) {
+	secretkey := blake2asU8a(secretKey)
+    var publicKey [32]byte
+    curve25519.ScalarBaseMult(&publicKey, secretkey)
+    return publicKey, *secretkey
 }

@@ -17,9 +17,9 @@ func FromChain(encoded []byte) string {
 	return string(didUri)
 }
 
-func DidPublicKeyDetailsFromChain(keyDetails signature.KeyringPair) map[string]interface{} {
-	return map[string]interface{}{
-		"sr25519": "0x" + hex.EncodeToString(keyDetails.PublicKey),
+func DidPublicKeyDetailsFromChain(keyDetails signature.KeyringPair) utils.EncodedVerificationKey {
+	return utils.EncodedVerificationKey{
+		Sr25519: keyDetails.PublicKey,
 	}
 }
 
