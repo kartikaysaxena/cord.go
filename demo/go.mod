@@ -1,8 +1,8 @@
 module github.com/dhiway/cord.go/demo
 
-go 1.22.3
+go 1.18
 
-require github.com/kartikaysaxena/substrateinterface v1.1.2
+require github.com/kartikaysaxena/substrateinterface v1.1.3
 
 require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
@@ -11,7 +11,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.7.2 // indirect
-	github.com/vedhavyas/go-subkey v1.0.4 // indirect
 	github.com/vedhavyas/go-subkey/v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -22,12 +21,12 @@ require (
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/base58 v1.0.4 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
+	github.com/dhiway/cord.go v1.5.0
 	github.com/ethereum/go-ethereum v1.10.20
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
-	github.com/dhiway/cord.go v1.5.0
 	github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/rs/cors v1.8.2 // indirect

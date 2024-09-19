@@ -1,10 +1,10 @@
 module github.com/dhiway/cord.go
 
-go 1.22.3
+go 1.18
 
 require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
-	github.com/kartikaysaxena/substrateinterface v1.1.2
+	github.com/kartikaysaxena/substrateinterface v1.1.3
 )
 
 require (

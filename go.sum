@@ -57,6 +57,8 @@ github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M
 github.com/jrick/logrotate v1.0.0/go.mod h1:LNinyqDIJnpAur+b8yyulnQw/wDuN1+BYKlTRt3OuAQ=
 github.com/kartikaysaxena/substrateinterface v1.1.2 h1:38lTRQtHPHAQ1BQCodqi9kBVSKYQijF/nU0Jzv/03yg=
 github.com/kartikaysaxena/substrateinterface v1.1.2/go.mod h1:b9cdFHACKQ267dKPmCu7DwaWNt9mJ9N+KCXpwKxxqfY=
+github.com/kartikaysaxena/substrateinterface v1.1.3 h1:ITSaChcPYAEH7QPdVqryr3+EJvlx8i7D2zHnl5571z4=
+github.com/kartikaysaxena/substrateinterface v1.1.3/go.mod h1:b9cdFHACKQ267dKPmCu7DwaWNt9mJ9N+KCXpwKxxqfY=
 github.com/kkdai/bstream v0.0.0-20161212061736-f391b8402d23/go.mod h1:J+Gs4SYgM6CZQHDETBtE9HaSEkGmuNXF86RwHhHUvq4=
 github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643/go.mod h1:43+3pMjjKimDBf5Kr4ZFNGbLql1zKkbImw+fZbw3geM=
 github.com/mimoo/StrobeGo v0.0.0-20220103164710-9a04d6ca976b h1:QrHweqAtyJ9EwCaGHBu1fghwxIPiopAHV06JlXrMHjk=

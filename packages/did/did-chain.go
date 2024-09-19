@@ -16,7 +16,8 @@ import (
 	"github.com/kartikaysaxena/substrateinterface/types/codec"
 	"github.com/kartikaysaxena/substrateinterface/types/extrinsic"
 	ext "github.com/kartikaysaxena/substrateinterface/types/extrinsic"
-	"github.com/vedhavyas/go-subkey/scale"
+	"github.com/kartikaysaxena/substrateinterface/scale"
+	registry "github.com/kartikaysaxena/substrateinterface/registry"
 
 	crypto_utils "github.com/dhiway/cord.go/packages/utils/src"
 )
@@ -29,11 +30,14 @@ type ApiInput struct {
 
 	Did crypto_utils.CordAddress
 	Submitter crypto_utils.CordAddress
+	MaxNewAgreementKeys
+	DidEndpoint []ChainEndpoint
+}
+
+type MaxNewAgreementKeys struct {
 	AssertionKey crypto_utils.EncodedVerificationKey
 	NewDelegationKey crypto_utils.EncodedVerificationKey
-	NewAgreementKey crypto_utils.EncodedEncryptionKey
-	NewServiceDetails []ChainEndpoint
-
+	NewAgreementKey crypto_utils.EncodedEncryptionKey	
 }
 
 type DidCall struct {
@@ -171,10 +175,16 @@ func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter
 	apiInput := ApiInput{
 		Did: did,
 		Submitter: sub,
-		AssertionKey: newAssertionKey,
-		NewDelegationKey: newDelegationKey,
-		NewAgreementKey: newKeyAgreementKeys,
-		NewServiceDetails: newServiceDetails,
+		MaxNewAgreementKeys: MaxNewAgreementKeys{
+			AssertionKey: newAssertionKey,
+			NewDelegationKey: newDelegationKey,
+			NewAgreementKey: newKeyAgreementKeys,
+		},
+		DidEndpoint: newServiceDetails,
+		// AssertionKey: newAssertionKey,
+		// NewDelegationKey: newDelegationKey,
+		// NewAgreementKey: newKeyAgreementKeys,
+		// NewServiceDetails: newServiceDetails,
 	}
 	fmt.Println(did, "debug level did")
 	fmt.Println(sub, "debug level submitter")
@@ -183,6 +193,53 @@ func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter
 	fmt.Println(newKeyAgreementKeys, "debug level KeyAgreementKeys")
 	fmt.Println(newServiceDetails, "debug level ServiceDetails")
 	fmt.Println(apiInput, "debug level apiInput")
+
+	meta, err := api.RPC.State.GetMetadataLatest()
+	if err != nil {
+		panic(err)
+	}
+
+	reg := registry.NewFactory()
+	callReg, err := reg.CreateCallRegistry(meta)
+	if err != nil {
+		panic(err)
+	}
+
+	callIndex, err := meta.AsMetadataV14.FindCallIndex("Did.create")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(callReg[callIndex], "debug level callReg")
+
+	for _, fields := range callReg[callIndex].Fields {
+		fmt.Println(fields.LookupIndex, "debug level fields")
+		fmt.Println(meta.AsMetadataV14.EfficientLookup[fields.LookupIndex], "debug level EfficientLookup")
+
+		for _, typeCheck := range meta.AsMetadataV14.EfficientLookup[fields.LookupIndex].Params {
+			fmt.Println(typeCheck.HasType, typeCheck.Type.Int64(), "debug level typeCheck")
+			fmt.Println(meta.AsMetadataV14.EfficientLookup[typeCheck.Type.Int64()], "debug level typeCheck type")
+
+
+
+
+			if len(meta.AsMetadataV14.EfficientLookup[typeCheck.Type.Int64()].Params) > 0  {
+				for _, typeCheck := range meta.AsMetadataV14.EfficientLookup[typeCheck.Type.Int64()].Params {
+					fmt.Println(typeCheck.HasType, typeCheck.Type.Int64(), "debug level typeCheckLooped")
+					fmt.Println(meta.AsMetadataV14.EfficientLookup[typeCheck.Type.Int64()], "debug level typeCheck typeLooped")
+				}
+			}
+		}
+
+		for _, customType := range meta.AsMetadataV14.EfficientLookup[fields.LookupIndex].Def.Variant.Variants {
+			fmt.Println(customType, "debug level customType")
+		}
+		// customType := meta.AsMetadataV14.EfficientLookup[fields.LookupIndex].Def.Variant.Variants
+	}
+
+	// meta.AsMetadataV14.EfficientLookup[]
+
+	// typesReg := meta.AsMetadataV14.EfficientLookup[]
 
 	// time.Sleep(30 * time.Second)
 	fmt.Println("timeout")
@@ -215,10 +272,6 @@ func GetStoreTx(api *gsrpc.SubstrateAPI, input map[string]interface{}, submitter
 	}
 	fmt.Println(encodedSignature.Sr25519, "sr25519 here")
 
-	meta, err := api.RPC.State.GetMetadataLatest()
-	if err != nil {
-		panic(err)
-	}
 
 	fmt.Println(encodedSignature, "debug level EncodedSignature") // 64 bytes fine
 

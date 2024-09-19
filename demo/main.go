@@ -85,7 +85,12 @@ func main() {
 	account, _ := utils.CreateAccount()
 	fmt.Println("address is here", account.Address, account.PublicKey, account.URI)
 
-	call, err := types.NewCall(meta, "NetworkMembership.nominate", types.AccountID(account.PublicKey), types.Bool(false))
+	accountID, err := types.NewAccountID(account.PublicKey)
+	if err != nil {
+		panic(err)
+	}
+
+	call, err := types.NewCall(meta, "NetworkMembership.nominate", accountID, types.Bool(false))
 	if err != nil {
 		panic(err)
 	}
